@@ -1,5 +1,5 @@
 /// \file waMysqlClient.h
-/// MysqlClient,MysqlData类头文件
+/// webapp::ysqlClient,webapp::MysqlData类头文件
 /// MySQL数据库C++接口
 
 // 编译参数:
@@ -15,7 +15,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \defgroup waMysqlClient waMysqlClient相关数据类型与全局函数
@@ -59,14 +59,6 @@ class MysqlData {
 	/// MysqlData析构函数
 	virtual ~MysqlData();
 	
-	/// \enum 函数MysqlData::find()查找方式
-	enum find_mode {
-		/// 查找第一个匹配纪录
-		FIND_FIRST,
-		/// 查找下一个匹配纪录
-		FIND_NEXT
-	};
-
 	/// 返回指定位置的MysqlData数据
 	/// \param row 行位置
 	/// \param col 列位置
@@ -87,32 +79,6 @@ class MysqlData {
 	/// 返回指定字段的MysqlData数据
 	string get_data( const unsigned long row, const string &field );
 
-	/// 返回当前位置指定字段的MysqlData数据
-	/// \param field 字段名
-	/// \return 数据字符串
-	inline string operator() ( const string &field ) {
-		return this->get_data( field );
-	}
-	/// 返回当前位置指定字段的MysqlData数据
-	/// \param field 字段名
-	/// \return 数据字符串
-	inline string get_data( const string &field ) {
-		return this->get_data( _curpos, field );
-	}
-	
-	/// 返回当前位置指定字段位置的MysqlData数据
-	/// \param col 列位置
-	/// \return 数据字符串
-	inline string operator() ( const unsigned int col ) {
-		return this->get_data( col );
-	}
-	/// 返回当前位置指定字段位置的MysqlData数据
-	/// \param col 列位置
-	/// \return 数据字符串
-	inline string get_data( const unsigned int col ) {
-		return this->get_data( _curpos, col );
-	}
-
 	/// 返回指定位置的MysqlData数据行
 	MysqlDataRow get_row( const long row = -1 );
 
@@ -129,40 +95,6 @@ class MysqlData {
 	int field_pos( const string &field );
 	/// 返回字段名称
 	string field_name( const unsigned int col ) const;
-
-	/// 当前位置是否是数据开始
-	/// \retval true 是
-	/// \retval false 否
-	inline bool bof() const {
-		return ( _curpos == 0 );
-	}
-	/// 当前位置是否是数据结束
-	/// \retval true 是
-	/// \retval false 否
-	inline bool eof() const {
-		return ( _curpos == _rows );
-	}
-	/// 设置当前位置为第一条数据
-	inline void first() {
-		_curpos = 0;
-	}
-	/// 设置当前位置为最后一条数据
-	inline void last() {
-		_curpos = (_rows>0) ? (_rows-1) : 0;
-	}
-	/// 返回当前位置
-	inline unsigned long curpos() const {
-		return _curpos;
-	}
-	/// 设置当前位置为前一条数据
-	bool prior();
-	/// 设置当前位置为后一条数据
-	bool next();
-	
-	/// 查询数据位置
-	long find( const string &field, 
-			   const string &value, 
-			   const find_mode mode = FIND_FIRST );
 
 	////////////////////////////////////////////////////////////////////////////
 	private:
@@ -190,7 +122,8 @@ class MysqlClient {
 	/// \param port 数据库端口，默认为0
 	/// \param socket UNIX_SOCKET，默认为NULL
 	MysqlClient( const string &host, const string &user, const string &pwd, 
-		   const string &database, const int port = 0, const char* socket = NULL ) {
+		const string &database, const int port = 0, const char* socket = NULL ) 
+	{
 		this->connect( host, user, pwd, database, port, socket );
 	}
 	
@@ -201,7 +134,7 @@ class MysqlClient {
 	
 	/// 连接数据库
 	bool connect( const string &host, const string &user, const string &pwd, 
-				  const string &database, const int port = 0, const char* socket = NULL );
+		const string &database, const int port = 0, const char* socket = NULL );
 	/// 断开数据库连接
 	void disconnect();
 	/// 判断是否连接数据库
@@ -216,20 +149,9 @@ class MysqlClient {
 	bool query( const string &sqlstr );
 	/// 返回查询结果中指定位置的字符串值
 	string query_val( const string &sqlstr, 
-					  const unsigned long row = 0, 
-					  const unsigned int col = 0 );
-	/// 返回查询结果中指定位置的整数值
-	/// \param sqlstr SQL查询字符串
-	/// \param row 数据行位置,默认为0
-	/// \param col 数据列位置,默认为0
-	/// \return 查询成功返回int类型值,否则返回0
-	inline int query_num( const string &sqlstr, 
-						  const unsigned long row = 0, 
-						  const unsigned int col = 0 ) {
-		return atoi( (this->query_val(sqlstr,row,col)).c_str() );
-	}
-	/// 返回查询结果中指定行
-	MysqlDataRow query_row( const string &sqlstr, const unsigned long row = 0 );
+		const unsigned long row = 0, const unsigned int col = 0 );
+    /// 返回查询结果中指定行
+    MysqlDataRow query_row( const string &sqlstr, const unsigned long row = 0 );
 
 	/// 上次查询动作所影响的记录条数
 	unsigned long affected();

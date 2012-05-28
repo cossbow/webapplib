@@ -1,6 +1,6 @@
 /// \file waCgi.h
-/// Cgi,Cookie类头文件
-/// 依赖于 waString, waCode
+/// webapp::Cgi,webapp::Cookie类头文件
+/// 依赖于 webapp::String, webapp::Encode
 
 #ifndef _WEBAPPLIB_CGI_H_
 #define _WEBAPPLIB_CGI_H_ 
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 ////////////////////////////////////////////////////////////////////////////////	
@@ -100,10 +100,10 @@ class Cookie {
 	
 	/// 设置cookie内容
 	void set_cookie( const string &name, const string &value, 
-					 const string &expires = "", const string &path = "/", 
-					 const string &domain = "sina.com.cn" ) const;
+		const string &expires = "", const string &path = "/", 
+		const string &domain = "" ) const;
 
-	/// 删除指定的cookie内容
+	/// 清除指定的cookie内容
 	/// \param name cookie名字
 	inline void del_cookie( const string &name ) const {
 		this->set_cookie( name, "", "Thursday,01-January-1970 08:00:01 GMT" );

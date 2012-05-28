@@ -16,16 +16,13 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-// for back_trace()
-#include <execinfo.h> 
-
 #include "waString.h"
 #include "waDateTime.h"
 #include "waUtility.h"
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 /// \ingroup waUtility 
@@ -288,26 +285,6 @@ string host_addr( const string &interface ) {
 	
 	close( fd );
 	return string(buf);
-}
-
-/// \ingroup waUtility 
-/// \fn string back_trace()
-/// 返回调用栈信息
-/// \return 调用栈信息，"\\n"分隔
-string back_trace() {
-	void *bt_buf[256];
-	char **bt_funcs;
-	string bt_result;
-	
-	int buf_size = backtrace( bt_buf, sizeof(bt_buf) );
-	bt_funcs = backtrace_symbols( bt_buf, buf_size );
-	for ( int i=0; i<buf_size; ++i ) {
-		bt_result += bt_funcs[i];
-		bt_result += "\n";
-	}
-	
-	free( bt_funcs );
-	return bt_result;
 }
 
 } // namespace

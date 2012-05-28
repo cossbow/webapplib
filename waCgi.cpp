@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 ////////////////////////////////////////////////////////////////////////////////	
@@ -134,7 +134,7 @@ string Cgi::get_cgi( const string &name ) {
 	
 	else if ( _method != "OPTIONS" && _method != "HEAD" && _method != "PUT" &&
 			  _method != "DELETE" && _method != "TRACE" ) {
-		// 测试模式，用户输入 cgi 参数
+		// 终端测试模式，用户输入 cgi 参数
 		string cgival;
 		cout << "Input value of CGI parameter \"" << name << "\", type _SPACE_ if no value: ";
 		cin >> cgival;
@@ -348,10 +348,10 @@ string Cookie::get_cookie( const string &name ) {
 /// \param value cookie值
 /// \param expires cookie有效期,GMT格式日期字符串,默认为空
 /// \param path cookie路径,默认为"/"
-/// \param domain cookie域,默认为"sina.com.cn"
+/// \param domain cookie域,默认为""
 void Cookie::set_cookie( const string &name, const string &value, 
-						 const string &expires, const string &path, 
-						 const string &domain ) const {
+	const string &expires, const string &path, const string &domain ) const 
+{
 	// Set-Cookie: name=value; expires=expires; path=path; domain=domain;
 	
 	string expires_setting;

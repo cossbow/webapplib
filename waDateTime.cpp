@@ -1,5 +1,5 @@
 /// \file waDateTime.cpp
-/// DateTime类实现文件
+/// webapp::DateTime类实现文件
 
 #include <cstdio>
 #include <cstring>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 /// 以当前时间设置对象
@@ -29,7 +29,8 @@ void DateTime::set( const time_t &tt ) {
 }
 
 /// 以指定时间设置对象
-/// 若参数不是有效日期时间,则设置为系统初始时间
+/// 若参数不是有效日期时间,则设置为系统初始时间（1970/1/1）
+/// 若参数日期时间不存在,则设置为顺延有效时间（非闰年2/29视为3/1）
 /// \param year 年
 /// \param mon 月
 /// \param mday 日
@@ -37,7 +38,8 @@ void DateTime::set( const time_t &tt ) {
 /// \param min 分,默认为0
 /// \param src 秒,默认为0
 void DateTime::set( const int year, const int mon, const int mday, 
-				const int hour, const int min, const int sec ) {
+	const int hour, const int min, const int sec ) 
+{
 	int _year = year;
 	int _mon = mon;
 	int _mday = mday;
@@ -67,7 +69,7 @@ void DateTime::set( const int year, const int mon, const int mday,
 /// \param st struct tm类型参数
 void DateTime::set( const tm &st ) {
 	this->set( st.tm_year+1900, st.tm_mon+1, st.tm_mday,
-		 	   st.tm_hour, st.tm_min, st.tm_sec );
+		st.tm_hour, st.tm_min, st.tm_sec );
 }
 
 /// 以 DateTime 参数设置对象
@@ -77,13 +79,14 @@ void DateTime::set( const DateTime &date ) {
 }
 
 /// 以"YYYY-MM-DD HH:MM:SS"格式字符串设置对象
-/// 若字符串格式错误或者时间值错误则设置为当前时间,
+/// 若字符串格式错误或者时间值错误则设置为当前时间
 /// \param datetime "YYYY-MM-DD HH:MM:SS"格式日期时间字符串
 /// \param datemark 日期分隔字符,默认为"-"
 /// \param dtmark 日期时间分隔字符,默认为" ",不能与datemark或timemark相同
 /// \param timemark 时间分隔字符,默认为":"
 void DateTime::set( const string &datetime, const string &datemark, 
-				const string &dtmark, const string &timemark ) {
+	const string &dtmark, const string &timemark ) 
+{
 	// init struct tm
 	struct tm tm;
 	tm.tm_isdst = -1;
@@ -111,10 +114,10 @@ string DateTime::date( const string &datemark, const bool leadingzero ) const {
 	char date_str[32];
 	if ( leadingzero )
 		snprintf( date_str, 32, "%04d%s%02d%s%02d", 
-				  this->year(), datemark.c_str(), this->month(), datemark.c_str(), this->m_day() );
+			this->year(), datemark.c_str(), this->month(), datemark.c_str(), this->m_day() );
 	else
 		snprintf( date_str, 32, "%d%s%d%s%d", 
-				  this->year(), datemark.c_str(), this->month(), datemark.c_str(), this->m_day() );
+			this->year(), datemark.c_str(), this->month(), datemark.c_str(), this->m_day() );
 	
 	return string( date_str );
 }
@@ -127,10 +130,10 @@ string DateTime::time( const string &timemark, const bool leadingzero ) const {
 	char time_str[32];
 	if ( leadingzero )
 		snprintf( time_str, 32, "%02d%s%02d%s%02d", 
-				  this->hour(), timemark.c_str(), this->min(), timemark.c_str(), this->sec() );
+			this->hour(), timemark.c_str(), this->min(), timemark.c_str(), this->sec() );
 	else
 		snprintf( time_str, 32, "%d%s%d%s%d", 
-				  this->hour(), timemark.c_str(), this->min(), timemark.c_str(), this->sec() );
+			this->hour(), timemark.c_str(), this->min(), timemark.c_str(), this->sec() );
 	
 	return string( time_str );
 }
@@ -142,9 +145,10 @@ string DateTime::time( const string &timemark, const bool leadingzero ) const {
 /// \param leadingzero 是否补充前置零,默认为是
 /// \return 输出指定格式的日期时间字符串
 string DateTime::datetime( const string &datemark, const string &dtmark,
-					   const string &timemark, const bool leadingzero ) const {
+	const string &timemark, const bool leadingzero ) const 
+{
 	string datetime = this->date(datemark,leadingzero) + dtmark + 
-					  this->time(timemark,leadingzero);
+		this->time(timemark,leadingzero);
 	return datetime;
 }
 
@@ -192,6 +196,23 @@ DateTime& DateTime::operator-=( const DateTime &date ) {
 DateTime& DateTime::operator-=( const time_t &tt ) {
 	this->set( value() - tt );
 	return *this;
+}
+
+/// 返回当月天数，范围1~31
+int DateTime::m_days() const {
+	int m = this->month();
+	if ( m==1 || m==3 || m==5 || m==7 || m==8 || m==10 || m==12 ) { 
+		return 31;
+	} else if ( m == 2 ) {
+		int leap = (this->year()) % 4;
+		if ( leap == 0 ) {
+			return 29;
+		} else {
+			return 28;
+		}
+	} else {
+		return 30;
+	}
 }
 
 /// 相加操作

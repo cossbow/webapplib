@@ -9,7 +9,7 @@
 
 using namespace std;
 
-// WEB Application Develop Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// URI±àÂë
@@ -28,3 +28,4 @@ string md5_encode( const string &source );
 } // namespace
 
 #endif //_WEBAPPLIB_ENCODE_H_
+

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// 文件或者目录是否存在
@@ -49,7 +49,7 @@ bool move_file( const string &srcfile, const string &destfile );
 vector<string> dir_files( const string &dir );
 /// 建立目录
 bool make_dir( const string &dir, 
-			   const mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH );
+	const mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH );
 /// 拷贝目录
 bool copy_dir( const string &srcdir, const string &destdir );
 /// 删除目录
@@ -77,5 +77,4 @@ FILE* lock_open( const string &file, const char* mode, const int type );
 } // namespace
 
 #endif //_WEBAPPLIB_FILE_H_
-
 

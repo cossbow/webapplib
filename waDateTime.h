@@ -1,5 +1,5 @@
 /// \file waDateTime.h
-/// DateTime类头文件
+/// webapp::DateTime类头文件
 /// 日期时间运算
 
 #ifndef _WEBAPPLIB_DATETIME_H_
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \defgroup waDateTime waDateTime相关数据类型与全局函数
@@ -56,7 +56,8 @@ class DateTime {
 	
 	/// 参数为指定时间的构造函数
 	DateTime( const int year, const int mon, const int mday, 
-		  const int hour=0, const int min=0, const int sec=0 ) {
+		const int hour=0, const int min=0, const int sec=0 ) 
+	{
 		this->set( year, mon, mday, hour, min, sec );
 	}
 	
@@ -67,7 +68,8 @@ class DateTime {
 	
 	/// 参数为"YYYY-MM-DD HH:MM:SS"格式字符串的构造函数
 	DateTime( const string &datetime, const string &datemark = "-", 
-		  const string &dtmark = " ", const string &timemark = ":" ) {
+		const string &dtmark = " ", const string &timemark = ":" ) 
+	{
 		this->set( datetime, datemark, dtmark, timemark );
 	}
 
@@ -96,20 +98,21 @@ class DateTime {
 
 	/// 返回四位数年份
 	inline int year() const {return _tm.tm_year+1900;}
-	/// 返回月份
+	/// 返回月份，范围1~12
 	inline int month() const {return _tm.tm_mon+1;}
-	/// 返回当月天数
+	/// 返回当月第几天，范围1~31
 	inline int m_day() const {return _tm.tm_mday;}
-	/// 返回当周天数
-	/// 周一至周六返回1~6，周日返回0
+	/// 返回当月天数，范围1~31
+	int m_days() const;
+	/// 返回当周第几天，周一至周六返回1~6，周日返回0
 	inline int w_day() const {return _tm.tm_wday;}
-	/// 返回当年天数
+	/// 返回当年第几天，范围0~365
 	inline int y_day() const {return _tm.tm_yday;}
-	/// 返回小时
+	/// 返回小时，范围0~23
 	inline int hour() const {return _tm.tm_hour;}
-	/// 返回分钟
+	/// 返回分钟，范围0~59
 	inline int min() const {return _tm.tm_min;}
-	/// 返回秒数
+	/// 返回秒数，范围0~59
 	inline int sec() const {return _tm.tm_sec;}
 	
 	/// 返回 1970-1-1 0:0:0 以来的秒数
@@ -131,12 +134,12 @@ class DateTime {
 	void set( const tm &st );
 	/// 以指定时间设置对象
 	void set( const int year, const int mon, const int mday, 
-			  const int hour=0, const int min=0, const int sec=0 );
+		const int hour=0, const int min=0, const int sec=0 );
 	/// 以 DateTime 参数设置对象
 	void set( const DateTime &date );
 	/// 以"YYYY-MM-DD HH:MM:SS"格式字符串设置对象
 	void set( const string &datetime, const string &datemark = "-", 
-			  const string &dtmark = " ", const string &timemark = ":" );
+		const string &dtmark = " ", const string &timemark = ":" );
 	
 	/// 返回 time_t 类型的对象值
 	inline time_t value() const {return this->secs();}
@@ -145,15 +148,15 @@ class DateTime {
 	
 	/// 输出日期字符串
 	string date( const string &datemark = "-", 
-				 const bool leadingzero = true ) const;
+		const bool leadingzero = true ) const;
 				 
 	/// 输出时间字符串
 	string time( const string &timemark = ":", 
-				 const bool leadingzero = true ) const;
+		const bool leadingzero = true ) const;
 				 
 	/// 输出日期时间字符串
 	string datetime( const string &datemark = "-", const string &dtmark = " ",
-					 const string &timemark = ":", const bool leadingzero = true ) const;
+		const string &timemark = ":", const bool leadingzero = true ) const;
 					 
 	/// 输出 GMT 格式日期时间字符串
 	string gmt_datetime() const;

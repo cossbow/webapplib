@@ -1,6 +1,6 @@
 /// \file waConfigFile.h
 /// INI格式配置文件解析类头文件
-/// 依赖于 waString, waTextFile
+/// 依赖于 webapp::String, webapp::TextFile
 
 #ifndef _WEBAPPLIB_CONFIGFILE_H_
 #define _WEBAPPLIB_CONFIGFILE_H_
@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// INI格式配置文件解析类

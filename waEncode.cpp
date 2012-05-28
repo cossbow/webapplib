@@ -5,13 +5,14 @@
 #include <cstring>
 #include <ctime>
 #include <cctype>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include "waEncode.h"
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 /// \defgroup waEncode waEncode×Ö·û´®¼ÓÃÜ±àÂëº¯Êý¿â

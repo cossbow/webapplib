@@ -14,7 +14,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \defgroup waHttpClient waHttpClient相关全局函数
@@ -34,7 +34,8 @@ namespace webapp {
 /// \retval 4 设置定时器失败或者连接超时
 /// \retval 10 未知错误
 int tcp_request( const string &server, const int port, const string &request,
-				 string &response, const int timeout ) {
+	string &response, const int timeout ) 
+{
 	// init
 	struct sockaddr_in sin;	 
 	sin.sin_family = AF_INET;
@@ -179,7 +180,7 @@ void HttpClient::set_param( const string &name, const string &value ) {
 /// \param parsed_param 请求参数分析结果
 /// \param parsed_port 服务器端口分析结果
 void HttpClient::parse_url( const string &urlstr, string &parsed_host, string &parsed_addr,
-					  string &parsed_url, string &parsed_param, int &parsed_port )
+	string &parsed_url, string &parsed_param, int &parsed_port )
 {
 	String url = urlstr;
 	url.trim();
@@ -235,7 +236,8 @@ void HttpClient::parse_url( const string &urlstr, string &parsed_host, string &p
 /// \param method 请求方法(GET或者POST)
 /// \return 返回生成的HTTP请求字符串
 string HttpClient::gen_httpreq( const string &url, const string &params, 
-						  const string &host, const string &method ) {
+	const string &host, const string &method ) 
+{
 	string request;
 	request.reserve( 512 );
 	
@@ -246,7 +248,7 @@ string HttpClient::gen_httpreq( const string &url, const string &params,
 	
 	request += "HOST: " + host + HTTP_CRLF;
 	request += "Accept: */*" + HTTP_CRLF;
-	request += "User-Agent: Mozilla/4.0 (compatible; webdevlib httpclient)" + HTTP_CRLF;
+	request += "User-Agent: Mozilla/4.0 (compatible; WebAppLib HttpClient)" + HTTP_CRLF;
 	request += "Pragma: no-cache" + HTTP_CRLF;
 	request += "Cache-Control: no-cache" + HTTP_CRLF;
 	
@@ -280,7 +282,7 @@ string HttpClient::gen_httpreq( const string &url, const string &params,
 /// \retval true 执行成功
 /// \retval false 执行失败
 bool HttpClient::request( const string &url, const string &host, const int port, 
-					const string &method, const int timeout )
+	const string &method, const int timeout )
 {
 	_errno = ERROR_NULL;
 	
@@ -340,7 +342,8 @@ bool HttpClient::request( const string &url, const string &host, const int port,
 /// \retval true URL有效
 /// \retval false URL已失效
 bool HttpClient::exist( const string &url, const string &server, 
-				  const int port ) {
+	const int port ) 
+{
 	bool res = false;
 
 	// check

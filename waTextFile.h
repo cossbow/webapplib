@@ -1,16 +1,17 @@
 /// \file waTextFile.h
 /// 固定分隔符文本文件读取解析类头文件
 /// 读取解析固定分隔符文本文件
-/// 依赖于 waString
+/// 依赖于 webapp::String
 
 #ifndef _WEBAPPLIB_TEXTFILE_H_
 #define _WEBAPPLIB_TEXTFILE_H_ 
 
+#include <cstdio>
 #include "waString.h"
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 /// 固定分隔符文本文件读取解析类

@@ -15,15 +15,17 @@
 
 # 执行文件列表
 EXES = example
+# 若安装 WebAppLib 时未编译 MysqlClient，则注释 MYSQL 变量
+MYSQL = yes
 
 # WEB开发库头文件目录
 INCPATH = -I/usr/local/include/webapplib
 # WEB开发库安装目录
 LIBPATH = /usr/local/lib
 # MySQL 头文件路径
-MYSQLINC = -I/usr/local/include/mysql
+MYSQLINC = -I/usr/include/mysql
 # MySQL 库文件路径及链接参数
-MYSQLLIB = -L/usr/local/lib/mysql -lmysqlclient -lm -lz
+MYSQLLIB = -L/usr/lib/mysql -lmysqlclient -lm -lz
 
 ################################################################################
 # 以下部分一般不需更改
@@ -36,6 +38,13 @@ CXXFLAGS = -Wall -O2 -g
 # -Wall 显示所有警告信息
 # -O2 编译优化
 # -g 生成调试信息
+
+# 是否编译MysqlClient组件
+ifndef MYSQL
+CXXFLAGS += -D_WEBAPPLIB_NOMYSQL
+MYSQLINC :=
+MYSQLLIB :=
+endif
 
 # 链接开发库文件参数
 WEBAPP = -L$(LIBPATH) -lwebapp

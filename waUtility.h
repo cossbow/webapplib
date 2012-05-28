@@ -1,7 +1,7 @@
 /// \file waUtility.h
 /// 系统调用工具函数头文件
 /// 常用系统调用和工具函数
-/// 依赖于 waString, waDateTime
+/// 依赖于 webapp::String, webapp::DateTime
 
 #ifndef _WEBAPPLIB_UTILITY_H_
 #define _WEBAPPLIB_UTILITY_H_ 
@@ -10,7 +10,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \defgroup waUtility waUtility系统调用工具函数库
@@ -74,7 +74,7 @@ string extract_html( const string &html );
 
 /// 全角半角字符转换并提取正文
 string extract_text( const string &text, const int option=EXTRACT_ALL, 
-					 const size_t len=0 );
+	const size_t len=0 );
 
 /// 追加日志记录
 void file_logger( const string &file, const char *format, ... );
@@ -87,9 +87,6 @@ string system_command( const string &cmd );
 
 /// 返回指定网卡设备绑定的IP地址
 string host_addr( const string &interface="eth0" );
-
-/// 返回调用栈信息
-string back_trace();
 
 } // namespace
 

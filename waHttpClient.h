@@ -1,6 +1,6 @@
 /// \file waHttpClient.h
 /// HTTP客户端类头文件
-/// 依赖于 waString, waEncode
+/// 依赖于 webapp::String, webapp::Encode
 /// <a href="wa_httpclient.html">使用说明文档及简单范例</a>
 
 #ifndef _WEBAPPLIB_HTTPCLIENT_H_
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 const string HTTP_CRLF = "\r\n";
@@ -21,7 +21,7 @@ const string DOUBLE_CRLF = "\r\n\r\n";
 	
 /// 发送TCP请求并取得回应内容
 int tcp_request( const string &server, const int port, const string &request, 
-				 string &response, const int timeout );
+	string &response, const int timeout );
 /// 根据服务器域名取得IP
 string gethost_byname( const string &domain );
 /// 判断字符串是否为有效IP
@@ -68,7 +68,8 @@ class HttpClient {
 	/// \param method HTTP请求Method,默认为"GET"
 	/// \param timeout HTTP请求超时时长,单位为秒,默认为5秒,为0不判断超时
 	HttpClient( const string &url, const string &server = "", const int port = 80, 
-		  const string &method = "GET", const int timeout = 5 ) {
+		const string &method = "GET", const int timeout = 5 ) 
+	{
 		this->request( url, server, port, method, timeout );
 	}
 		  
@@ -88,7 +89,7 @@ class HttpClient {
 
 	/// 执行HTTP请求
 	bool request( const string &url, const string &server = "", const int port = 80, 
-				  const string &method = "GET", const int timeout = 5 );
+		const string &method = "GET", const int timeout = 5 );
 	/// URL 是否有效
 	bool exist( const string &url, const string &server = "", const int port = 80 );
 
@@ -144,10 +145,10 @@ class HttpClient {
 
 	/// 分析HTTP URL字符串
 	void parse_url( const string &url, string &parsed_host, string &parsed_addr,
-					string &parsed_url, string &parsed_param, int &parsed_port );
+		string &parsed_url, string &parsed_param, int &parsed_port );
 	/// 生成HTTP请求字符串
 	string gen_httpreq( const string &url, const string &params,
-						const string &host, const string &method );
+		const string &host, const string &method );
 	/// 分析HTTP返回
 	void parse_response( const string &response );
 	/// 分析HTTP返回chunked类型content正文

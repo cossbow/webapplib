@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \defgroup waFileSystem waFileSystem文件操作函数库
@@ -287,8 +287,7 @@ bool make_dir( const string &dir, const mode_t mode ) {
 /// \param destdir 目的目录
 /// \retval true 操作成功
 /// \retval false 失败
-bool copy_dir( const string &srcdir, const string &destdir ) {
-	
+bool copy_dir( const string &srcdir, const string &destdir ) {	
 	vector<string> files = dir_files( srcdir );
 	string from;
 	string to;
@@ -321,8 +320,7 @@ bool copy_dir( const string &srcdir, const string &destdir ) {
 /// \param dir 要删除的目录
 /// \retval true 操作成功
 /// \retval false 失败
-bool delete_dir( const string &dir ) {
-	
+bool delete_dir( const string &dir ) {	
 	vector<string> files = dir_files( dir );
 	string todel;
 	

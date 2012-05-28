@@ -1,5 +1,5 @@
 /// \file waString.cpp
-/// String类实现文件
+/// webapp::String类实现文件
 
 #include <cstdio>
 #include <cstdarg>
@@ -8,7 +8,7 @@
 #include <fstream>
 #include "waString.h"
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 ////////////////////////////////////////////////////////////////////////////////	
@@ -183,7 +183,7 @@ char* String::c_char() const {
 	return buf;
 }
 
-/// 返回字符数量，汉字算作一个字符
+/// 返回字符数量，GBK汉字算作一个字符
 /// \return 字符数量
 string::size_type String::w_length() const {
 	size_t wlen = 0;
@@ -205,13 +205,14 @@ string::size_type String::w_length() const {
 /// \param n 要截取的字符串长度,默认为到末尾,单字节计数方式
 /// \return 所截取的字符串
 String String::w_substr( const string::size_type pos, 
-						 const string::size_type n ) const {
+	const string::size_type n ) const 
+{
     size_t len = this->length();
     if ( len<=0 || pos>=len || n<=0 )
         return String( "" );
 
     size_t from = pos;
-    size_t to = std::min( pos+n, len );
+    size_t to = min( pos+n, len );
 
     // location
     for ( size_t i=0; i<to; ++i ) {
@@ -232,22 +233,21 @@ String String::w_substr( const string::size_type pos,
 }
 
 /// 清除左侧空白字符
-/// \param blank 要过滤掉的空白字符列表,默认为webdevlib::BLANK_CHARS
+/// \param blank 要过滤掉的空白字符列表,默认为webapp::BLANK_CHARS
 void String::trim_left( const string &blank ) {
 	while ( this->length()>0 && blank.find(this->at(0))!=npos )
 		this->erase( 0, 1 );
 }
 
 /// 清除右侧空白字符
-/// \param blank 要过滤掉的空白字符列表,默认为webdevlib::BLANK_CHARS
-void String::trim_right( const string &blank )
-{
+/// \param blank 要过滤掉的空白字符列表,默认为webapp::BLANK_CHARS
+void String::trim_right( const string &blank ) {
 	while ( this->length()>0 && blank.find(this->at(length()-1))!=npos )
 		erase( this->length()-1, 1 );
 }
 
 /// 清除两侧空白字符
-/// \param blank 要过滤掉的空白字符列表,默认为webdevlib::BLANK_CHARS
+/// \param blank 要过滤掉的空白字符列表,默认为webapp::BLANK_CHARS
 void String::trim( const string &blank ) {
 	this->trim_left( blank );
 	this->trim_right( blank );
@@ -267,7 +267,8 @@ String String::left( const string::size_type n ) const {
 /// \param n 要截取的字符串长度,若长度超出则返回原字符串,默认为到末尾
 /// \return 所截取的字符串
 String String::mid( const string::size_type pos, 
-					const string::size_type n ) const {
+	const string::size_type n ) const 
+{
 	if ( pos > this->length() )	
 		return String( "" );
 	return String( this->substr(pos,n) );
@@ -313,18 +314,14 @@ int String::count( const string &str ) const {
 /// 根据分割符分割字符串
 /// \param tag 分割标记字符串
 /// \param limit 分割次数限制,默认为0即不限制
-/// \param ret 结果返回模式,可选
-/// - String::SPLIT_ERASE_BLANK 连续分隔符视为一个
-/// - String::SPLIT_KEEP_BLANK 连续分隔符都执行切分
-/// - 默认为String::SPLIT_ERASE_BLANK
-/// \param spl 切分模式,可选
-/// - String::SPLIT_SINGLE 将参数tag视为一个完整的切分依据字符串
-/// - String::SPLIT_MULTI 将参数tag视为一个切分字符串序列,包含其中任何一个半角字符都将执行切分动作
-/// - 默认为String::SPLIT_SINGLE
+/// \param mode 结果返回模式,可选
+/// - String::SPLIT_IGNORE_BLANK 忽略连续多个分隔符，返回结果不含空字段
+/// - String::SPLIT_KEEP_BLANK 不忽略连续多个分隔符，返回结果包含空字段
+/// - 默认为String::SPLIT_IGNORE_BLANK
 /// \return 分割结果字符串数组 vector<String>
 vector<String> String::split( const string &tag, const int limit, 
-							  const split_resmode ret,
-							  const split_splmode spl ) const {
+	const split_mode mode ) const 
+{
 	string src = *this;
 	string curelm;
 	vector<String> list;
@@ -333,50 +330,40 @@ vector<String> String::split( const string &tag, const int limit,
 	list.clear();
 	if ( tag.length()>0 && src.length()>0 ) {
 		// how to split
-		size_t pos = 0;
-		if ( spl == SPLIT_SINGLE ) 
-			pos = src.find( tag );			// single split
-		else 
-			pos = src.find_first_of( tag );	// multi split
+		size_t pos = src.find( tag );
 		
 		while ( pos < src.length() ) {
 			curelm = src.substr( 0, pos );
 			
-			// how to return
-			if ( !(ret==SPLIT_ERASE_BLANK && curelm.length()==0) ) {
+			// is keep blank
+			if ( !(mode==SPLIT_IGNORE_BLANK && curelm.length()==0) ) {
 				list.push_back( curelm );
 				++count;
 			}
 
-			// how to split
-			if ( spl == SPLIT_SINGLE ) {
-				// single split
-				src = src.substr( pos + tag.length() );
-				pos = src.find( tag );
-			} else {
-				// multi split
-				src = src.substr( pos+1 );
-				pos = src.find_first_of( tag );
-			}
+			// split
+			src = src.substr( pos + tag.length() );
+			pos = src.find( tag );
 			
 			if ( limit>0 && count>=limit )
 				break;
 		}
 		
-		// how to return
-		if ( !(ret==SPLIT_ERASE_BLANK && src.length()==0) )
+		// is keep blank
+		if ( !(mode==SPLIT_IGNORE_BLANK && src.length()==0) )
 			list.push_back( src );
 	}
 	
 	return list;
 }
 
-/// 转换字符串为HASH结构(map<string,string>)
+/// 转换字符串为MAP结构(map<string,string>)
 /// \param itemtag 表达式之间的分隔符,默认为"&"
 /// \param exptag 表达式中变量名与变量值之间的分隔符,默认为"="
 /// \return 转换结果 map<string,string>
-map<string,string> String::tohash( const string &itemtag, 
-								   const string &exptag ) const {
+map<string,string> String::tomap( const string &itemtag, 
+	const string &exptag ) const 
+{
 	map<string,string> hashmap;
 	
 	if ( itemtag!="" && exptag!="" ) {
@@ -431,7 +418,7 @@ bool String::sprintf( const char *format, ... ) {
 }
 
 /// 替换
-/// 该函数重载了std::string::replace()
+/// 该函数重载了string::replace()
 /// \param oldstr 被替换掉的字符串
 /// \param newstr 用来替换旧字符串的新字符串
 /// \retval 1 替换成功
@@ -519,7 +506,8 @@ bool String::load_file( const string &filename ) {
 /// \retval true 写入成功
 /// \retval false 失败
 bool String::save_file( const string &filename, const ios::openmode mode,
-						const mode_t permission ) const {
+	const mode_t permission ) const 
+{
 	ofstream outfile( filename.c_str(), mode );
 	if ( outfile ) {
 		outfile << *this;
@@ -532,99 +520,6 @@ bool String::save_file( const string &filename, const ios::openmode mode,
 		return true;
 	}
 	return false;
-}
-
-/// 过滤字符
-/// \param filter 要过滤掉的字符列表（支持全角字符）,默认为webdevlib::CGI_SENSITIVE
-/// \param newstr 替换字符串,默认为空字符串
-void String::filter( const string &filter, const string &newstr ) {
-	string res;
-	
-	// split filter
-	size_t i;
-	String fstr = filter;
-	vector<string> flist = fstr.split_char();
-	set<string> fset;
-	for( i=0; i<flist.size(); ++i )
-		fset.insert( flist[i] );
-	
-	// split self
-	vector<string> words = this->split_char();
-	for( i=0; i<words.size(); ++i ) {
-		// filter
-		if ( fset.find(words[i]) != fset.end() )
-			res += newstr;
-		else
-			res += words[i];
-	}
-	
-	*this = res;
-}
-
-/// HTML代码转义
-/// \param mode 转换动作模式
-/// - String::ESCAPE_HTML HTML代码转换为转义符
-/// - String::UNESCAPE_HTML 转义符转换为HTML代码
-/// \return 转义结果字符串
-string String::escape_html( const eschtml_mode mode ) {
-	String src = *this;
-	if ( mode == ESCAPE_HTML ) {
-		// escape
-		char reserved[] = "<>\'\"&";
-		string escaped;
-		escaped.reserve( src.length()*2 );
-	
-		unsigned int lastpos = 0;
-		unsigned int currpos = 0;	
-		while ( (currpos=src.find_first_of(reserved,lastpos)) != src.npos ) {
-			escaped.append( src.substr(lastpos,currpos-lastpos) );
-			switch( src[currpos] ) {
-				case '<':	escaped.append( "&lt;" );	break;
-				case '>':	escaped.append( "&gt;" );	break;
-				case '\'':	escaped.append( "&#39;" );	break;
-				case '"':	escaped.append( "&quot;" );	break;
-				case '&':	escaped.append( "&amp;" );	break;
-				default:	break;
-			}
-			lastpos = currpos + 1;
-		}
-		escaped.append( src.substr(lastpos) );
-		return escaped;		
-		
-	} else { //if ( mode == UNESCAPE_HTML )
-		// unescape
-		src.replace_all( "&amp;", "&" );
-		src.replace_all( "&#39;", "\'" );
-		src.replace_all( "&quot;", "\"" );
-		src.replace_all( "&lt;", "<" );
-		src.replace_all( "&gt;", ">" );
-		return src;
-	}
-}
-
-/// 将字符串拆分为字符序列，支持全角字符
-/// return 拆分结果字符串数组
-vector<string> String::split_char() const {
-	size_t len = this->length();
-	vector<string> chs;
-	string word;
-	char ch[3];
-	
-	for ( size_t i=0; i<len; ++i ) {
-		if ( i<(len-1) && isgbk(this->at(i),this->at(i+1)) ) {
-			// double byte char
-			ch[0] = this->at(i);
-			ch[1] = this->at(++i);
-			ch[2] = '\0';
-			word = ch;
-		} else {
-			// single byte char
-			word = this->at(i);
-		}
-		chs.push_back( word );
-	}
-	
-	return chs;
 }
 
 } // namespace

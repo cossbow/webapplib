@@ -1,14 +1,15 @@
 /// \file waMysqlClient.cpp
-/// MysqlClient,MysqlData类实现文件
+/// webapp::MysqlClient,webapp::MysqlData类实现文件
 
 // 编译参数:
 // (CC) -I /usr/local/include/mysql/ -L /usr/local/lib/mysql -lmysqlclient -lm
 
+#include <cstring>
 #include "waMysqlClient.h"
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 
 /// \ingroup waMysqlClient
@@ -102,65 +103,6 @@ MysqlDataRow MysqlData::get_row( const long row ) {
 	return datarow;
 }
 
-/// 设置当前位置为前一条数据
-/// \retval true 成功 
-/// \retval false 已经为第一条数据
-bool MysqlData::prior() {
-	if ( _curpos > 0 ) {
-		--_curpos;
-		return true;
-	}
-	return false;
-}
-
-/// 设置当前位置为后一条数据
-/// \retval true 成功 
-/// \retval false 已经为最后一条数据
-bool MysqlData::next() {
-	if ( _curpos < _rows-1 ) {
-		++_curpos;
-		return true;
-	}
-	return false;
-}
-
-/// 查询数据位置 
-/// \param field 数据字段名
-/// \param value 要查找的数据值
-/// \param mode 查找方式
-/// - MysqlData::FIND_FIRST 从头开始查找,
-/// - MysqlData::FIND_NEXT 从当前位置开始继续查找
-/// - 默认为MysqlData::FIND_FIRST
-/// \return 若查找到相应纪录返回纪录条数位置并设为当前数据位置，否则返回-1
-long MysqlData::find( const string &field, const string &value, 
-					 const find_mode mode ) {
-	// confirm
-	if ( _rows==0 || _cols==0 )
-		return -1;
-	
-	int col = this->field_pos( field );
-	if ( col==-1 || static_cast<size_t>(col)>_cols ) 
-		return -1;
-		
-	// init
-	unsigned long pos;
-	if ( mode == FIND_FIRST )
-		pos = 0;
-	else if ( _curpos < _rows )
-		pos = _curpos + 1;
-	else
-		return -1;	
-		
-	// find
-	for ( ; pos<_rows; ++pos ) {
-		if ( this->get_data(pos,col) == value ) {
-			_curpos = pos;
-			return _curpos;
-		}
-	}
-	return -1;
-}
-
 /// 填充MysqlData数据
 /// \param mysql MYSQL*参数
 /// \retval true 成功
@@ -173,7 +115,7 @@ bool MysqlData::fill_data( MYSQL *mysql ) {
 	if ( _mysqlres != NULL )
 		mysql_free_result( _mysqlres );
 	_mysqlres = 0;
-	this->first(); // return to first position
+	_curpos = 0; // return to first position
 	_field_pos.clear(); // clean field pos cache
 
 	// fill data
@@ -236,7 +178,8 @@ string MysqlData::field_name( unsigned int col ) const {
 /// \retval true 成功
 /// \retval false 失败
 bool MysqlClient::connect( const string &host, const string &user, const string &pwd, 
-					 const string &database, const int port, const char* socket ) {
+	const string &database, const int port, const char* socket ) 
+{
 	this->disconnect();
 	
 	if ( mysql_init(&_mysql) ) {
@@ -312,11 +255,12 @@ bool MysqlClient::query( const string &sqlstr ) {
 /// \param col 数据列位置,默认为0
 /// \return 查询成功返回字符串,否则返回空字符串
 string MysqlClient::query_val( const string &sqlstr, const unsigned long row, 
-						 const unsigned int col ) {
-	MysqlData res;
-	if ( this->query(sqlstr,res) ) {
-		if ( res.rows()>row && res.cols()>col )
-			return res(row,col);
+	const unsigned int col ) 
+{
+	MysqlData data;
+	if ( this->query(sqlstr,data) ) {
+		if ( data.rows()>row && data.cols()>col )
+			return data(row,col);
 	}
 	return string( "" );
 }
@@ -326,14 +270,14 @@ string MysqlClient::query_val( const string &sqlstr, const unsigned long row,
 /// \param row 数据行位置,默认为0
 /// \return 返回值类型为MysqlDataRow,即map<string,string>
 MysqlDataRow MysqlClient::query_row( const string &sqlstr, const unsigned long row ) {
-	MysqlData res;
-	MysqlDataRow resrow;
-	if ( this->query(sqlstr,res) ) {
-		if ( row < res.rows() )
-			resrow = res.get_row( row );
-	}
-	
-	return resrow;
+    MysqlData data;
+    MysqlDataRow datarow;
+    if ( this->query(sqlstr,data) ) {
+        if ( row < data.rows() )
+            datarow = data.get_row( row );
+    }
+
+    return datarow;
 }
 
 /// 上次查询动作所影响的记录条数

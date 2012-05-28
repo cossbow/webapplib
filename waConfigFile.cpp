@@ -10,7 +10,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 /// 读取解析配置文件
@@ -210,7 +210,9 @@ vector<string> ConfigFile::block_list() {
 /// \param value 配置参数值
 /// \retval true 更新成功
 /// \retval false 更新失败
-bool ConfigFile::set_value( const string &block, const string &name, const string &value ) {
+bool ConfigFile::set_value( const string &block, const string &name, 
+	const string &value ) 
+{
 	if ( name == "" )
 		return false;
 	_config[ block ][ name ] = value;
@@ -223,7 +225,9 @@ bool ConfigFile::set_value( const string &block, const string &name, const strin
 /// \param valuelist 配置参数值对列表
 /// \retval true 更新成功
 /// \retval false 更新失败
-bool ConfigFile::set_block( const string &block, const map<string,string> &valuelist ) {
+bool ConfigFile::set_block( const string &block, 
+	const map<string,string> &valuelist ) 
+{
 	if ( valuelist.size() <= 0 )
 		return false;
 	

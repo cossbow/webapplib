@@ -13,7 +13,7 @@
 
 using namespace std;
 
-// WEB Application Library namaspace
+/// Web Application Library namaspace
 namespace webapp {
 	
 ////////////////////////////////////////////////////////////////////////////
@@ -49,70 +49,55 @@ void Template::set( const string &name, const string &value ) {
 		_sets[name] = value;
 }
 
-/// 取消替换规则
-/// \param name 模板域名称
-void Template::unset( const string &name ) {
-	if ( name != "" )
-		_sets.erase( name );
-}
-
-/// 新建表格
-/// \param table 表格名称
+/// 新建循环
+/// \param loop 循环名称
 /// \param field_0 field_0及field_0之后为字段名称列表,最后一个参数必须是NULL
 /// \param ... 字段名称列表,最后一个参数必须是NULL
-void Template::table( const string &table, const char* field_0, ... ) {
+void Template::def_loop( const string &loop, const char* field_0, ... ) {
 	va_list ap;
 	const char *p;
 	string field;
 	strings fields;
 	size_t cols = 0;
 	
-	// check same name table
-	if ( _tables.find(table) != _tables.end() )
-		this->error_log( 0, "Warning: table name \""+table+"\" redefined" );
+	// check same name loop
+	if ( _loops.find(loop) != _loops.end() )
+		this->error_log( 0, "Warning: loop name \""+loop+"\" redefined" );
 	
 	// get fields
 	va_start( ap, field_0 );
 	for ( p=field_0; p; p=va_arg(ap,const char*) ) {
 		if ( (field=p) != "" ) {
 			fields.push_back( field );
-			_tables[table].fieldspos[field] = cols; // for speed
+			_loops[loop].fieldspos[field] = cols; // for speed
 			++cols;
 		}
 	}
 	va_end( ap );
 
 	// for waTemplate old version templet script ( < v0.7 )
-	if ( _sets.find(table) == _sets.end() )
-		set( table, table );
+	if ( _sets.find(loop) == _sets.end() )
+		set( loop, loop );
 
-	// init table
-	_tables[table].fields = fields;
-	for ( size_t i=0; i<_tables[table].datas.size(); ++i )
-		_tables[table].datas[i].clear();
-	_tables[table].datas.clear();
-	_tables[table].cursor = 0;
-	_tables[table].rows = 0;
-	_tables[table].cols = cols;
+	// init loop
+	_loops[loop].fields = fields;
+	for ( size_t i=0; i<_loops[loop].datas.size(); ++i )
+		_loops[loop].datas[i].clear();
+	_loops[loop].datas.clear();
+	_loops[loop].cursor = 0;
+	_loops[loop].rows = 0;
+	_loops[loop].cols = cols;
 }
 
-/// 取消表格
-/// 执行成功后将删除该表格所有设置数据
-/// \param table 表格名称
-void Template::unset_table( const string &table ) {
-	if ( table != "" )
-		_tables.erase( table );
-}
-
-/// 添加一行数据到表格
-/// 必须先调用Template::table()初始化表格字段定义,否则中止
-/// \param table 表格名称
+/// 添加一行数据到循环
+/// 必须先调用Template::def_loop()初始化循环字段定义,否则中止
+/// \param loop 循环名称
 /// \param value_0 value_0及value_0之后为字段名称列表,最后一个参数必须是NULL
 /// \param ... 字段名称列表,最后一个参数必须是NULL
-void Template::set_row( const string &table, const char* value_0, ... ) {
-	// table must exist
-	if ( _tables.find(table) == _tables.end() ) {
-		this->error_log( 0, "Error: Call table() to init $"+table+" first, in set_row()" );
+void Template::append_row( const string &loop, const char* value_0, ... ) {
+	// loop must exist
+	if ( _loops.find(loop) == _loops.end() ) {
+		this->error_log( 0, "Error: Call def_loop() to init $"+loop+" first, in append_row()" );
 		return;
 	}
 	
@@ -130,38 +115,38 @@ void Template::set_row( const string &table, const char* value_0, ... ) {
 		++cols;
 		
 		// enough now
-		if ( cols >= _tables[table].cols )
+		if ( cols >= _loops[loop].cols )
 			break;
 	}
 	va_end( ap );
 
 	// fill blank if not enough
-	if( cols < _tables[table].cols ) {
-		for ( int i=cols; i<_tables[table].cols; ++i )
+	if( cols < _loops[loop].cols ) {
+		for ( int i=cols; i<_loops[loop].cols; ++i )
 			values.push_back( "" );
 	}
 	
-	// insert into table
-	_tables[table].datas.push_back( values );
-	++_tables[table].rows;
+	// insert into loop
+	_loops[loop].datas.push_back( values );
+	++_loops[loop].rows;
 }
 
-/// 添加一行指定格式的数据到表格
-/// 必须先调用Template::table()初始化表格字段定义,否则中止
-/// \param table 表格名称
-/// \param format 字段列表格式定义,"%d,%s,..."格式
+/// 添加一行指定格式的数据到循环
+/// 必须先调用Template::def_loop()初始化循环字段定义,否则中止
+/// \param loop 循环名称
+/// \param format 字段列循环式定义,"%d,%s,..."格式
 /// \param ... 第三个参数起为字段值列表,
 /// 字段值参数个数不能少于格式定义参数format中指定的个数
-void Template::format_row( const string &table, const char* format, ... ) {
-	// table must exist
-	if ( _tables.find(table) == _tables.end() ) {
-		this->error_log( 0, "Error: Call table() to init $"+table+" first, in format_row()" );
+void Template::append_format( const string &loop, const char* format, ... ) {
+	// loop must exist
+	if ( _loops.find(loop) == _loops.end() ) {
+		this->error_log( 0, "Error: Call def_loop() to init $"+loop+" first, in append_format()" );
 		return;
 	}
 	
 	// split format string
 	String fmtstr = format;
-	vector<String> fmtlist = fmtstr.split( TEMPLATE_SPLIT );
+	vector<String> fmtlist = fmtstr.split( TMPL_SPLIT );
 	
 	// get values
 	va_list ap;
@@ -173,7 +158,7 @@ void Template::format_row( const string &table, const char* format, ... ) {
 	for ( size_t i=0; i<fmtlist.size(); ++i ) {
 		// read
 		fmtlist[i].trim();
-		if ( fmtlist[i] == TEMPLATE_FMTSTR )
+		if ( fmtlist[i] == TMPL_FMTSTR )
 			value = va_arg( ap, const char* ); // %s
 		else
 			value = itos( va_arg(ap,long) ); // %d or other
@@ -183,147 +168,40 @@ void Template::format_row( const string &table, const char* format, ... ) {
 		++cols;
 
 		// enough now
-		if ( cols >= _tables[table].cols )
+		if ( cols >= _loops[loop].cols )
 			break;
 	}
 	va_end( ap );
 
 	// fill blank if not enough
-	if( cols < _tables[table].cols ) {
-		for ( int i=cols; i<_tables[table].cols; ++i )
+	if( cols < _loops[loop].cols ) {
+		for ( int i=cols; i<_loops[loop].cols; ++i )
 			values.push_back( "" );
 	}
 	
-	// insert into table
-	_tables[table].datas.push_back( values );
-	++_tables[table].rows;
-}
-
-/// 设置表格指定位置值
-/// \param table 表格名称
-/// \param row 位置,即第几行
-/// \param field 字段名称,即第几列
-/// \param value 要设置为的值
-void Template::set( const string &table, const int row, 
-			   const string &field, const string &value ) {
-	// table must exist
-	if ( _tables.find(table) == _tables.end() ) {
-		this->error_log( 0, "Error: Call table() to init $"+table+" first, in set()" );
-		return;
-	}
-
-	// row out of range
-	if ( row > _tables[table].rows ) {
-		this->error_log( 0, "Error: $"+table+" row out of range, in set()" );
-		return;
-	}
-
-	int col = this->field_pos( table, field );
-	if ( col != -1 )
-		_tables[table].datas[row][col] = value;
-}
-
-/// 取消表格指定行
-/// \param table 表格名称
-/// \param row 行位置
-void Template::unset_row( const string &table, const int row ) {
-	// table must exist
-	if ( _tables.find(table) == _tables.end() ) {
-		this->error_log( 0, "Error: Call table() to init $"+table+" first, in unset_row()" );
-		return;
-	}
-	
-	if ( row <= _tables[table].rows ) {
-		// delete row
-		vector<strings>::iterator pos = _tables[table].datas.begin();
-		std::advance( pos, row-1 );
-		_tables[table].datas.erase( pos );
-		--_tables[table].rows;
-	}
-}
-
-/// 表格行排序
-/// \param table 表格名称
-/// \param field 排序字段
-/// \param mode 排序模式
-/// - Template::TEMPLATE_SORT_ASCE 升序
-/// - Template::TEMPLATE_SORT_DESC 降序
-/// - 默认为升序
-/// \param cmp 排序比较模式,
-/// 可以为字符串比较(Template::TEMPLATE_CMP_STR)或者整数比较(Template::TEMPLATE_CMP_INT),默认为字符串比较
-void Template::sort_table( const string &table, const string &field, 
-					  const sort_mode mode, const cmp_mode cmp ) {
-	// table must exist
-	if ( _tables.find(table) == _tables.end() ) {
-		this->error_log( 0, "Error: Call table() to init $"+table+
-					  	 " first, in sort_table()" );
-		return;
-	}
-
-	// get field position
-	int col = this->field_pos( table, field );
-	if ( col == -1 ) {
-		this->error_log( 0, "Warning: field .$"+field+" not defined in tabel \""+
-					  		table+"\", in sort_table()" );
-		return;
-	}
-
-	// sort
-	bool swaped;
-	bool needswap;
-	string curr, next;
-	int curr_int, next_int;
-	
-	do {
-		swaped = false;
-		for ( int i=0; i<_tables[table].rows-1; ++i ) {
-			curr = _tables[table].datas[i][col];
-			next = _tables[table].datas[i+1][col];
-
-			if ( cmp == TEMPLATE_CMP_STR ) {
-				// string compare
-				if ( mode == TEMPLATE_SORT_ASCE )
-					needswap = ( curr>next ) ? true : false;
-				else
-					needswap = ( curr<next ) ? true : false;
-			} else {
-				// integer compare
-				curr_int = stoi( curr );
-				next_int = stoi( next );
-				
-				if ( mode == TEMPLATE_SORT_ASCE )
-					needswap = ( curr_int>next_int ) ? true : false;
-				else
-					needswap = ( curr_int<next_int ) ? true : false;
-			}
-				
-			// swap
-			if ( needswap ) {
-				std::swap( _tables[table].datas[i], _tables[table].datas[i+1] );
-				swaped = true;
-			}
-		}
-	} while ( swaped == true );
+	// insert into loop
+	_loops[loop].datas.push_back( values );
+	++_loops[loop].rows;
 }
 
 /// 清空所有替换规则
-/// 包括所有表格替换规则
+/// 包括所有循环替换规则
 void Template::clear_set() {
 	_sets.clear();
-	_tables.clear();
+	_loops.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////
 // parse functions
 
 /// 返回字段位置
-/// \param table 表格名称
+/// \param loop 循环名称
 /// \param field 字段名称
 /// \return 找到返回字段位置,否则返回-1
-int Template::field_pos( const string &table, const string &field ) {
-	if ( _tables[table].fieldspos.find(field) == _tables[table].fieldspos.end() )
+int Template::field_pos( const string &loop, const string &field ) {
+	if ( _loops[loop].fieldspos.find(field) == _loops[loop].fieldspos.end() )
 		return -1;
-	return _tables[table].fieldspos[field];
+	return _loops[loop].fieldspos[field];
 }
 
 /// 读取指定位置的模板脚本类型及表达式
@@ -333,136 +211,137 @@ int Template::field_pos( const string &table, const string &field ) {
 /// \param type 分析出的脚本语句类型
 /// \return 返回值为本次分析的字符串长度,若出错返回-1
 int Template::parse_script( const string &tmpl, const size_t pos, 
-					   string &exp, int &type ) {
-	// find TEMPLATE_END
-	size_t begin = pos + TEMPLATE_BEGIN_LEN;
+	string &exp, int &type ) 
+{
+	// find TMPL_END
+	size_t begin = pos + TMPL_BEGIN_LEN;
 	size_t end;
-	if ( (end=tmpl.find(TEMPLATE_END,begin)) == tmpl.npos )
-		return -1;	// can not find TEMPLATE_END
+	if ( (end=tmpl.find(TMPL_END,begin)) == tmpl.npos )
+		return -1;	// can not find TMPL_END
 
 	// script type and content
 	String content = tmpl.substr( begin, end-begin );
 	content.trim();
 
-	if ( strncmp(content.c_str(),TEMPLATE_VALUE,TEMPLATE_VALUE_LEN) == 0 ) {
+	if ( strncmp(content.c_str(),TMPL_VALUE,TMPL_VALUE_LEN) == 0 ) {
 		// simple value: $xxx
-		type = TEMPLATE_S_VALUE;
+		type = TMPL_S_VALUE;
 		
-	} else if ( strncmp(content.c_str(),TEMPLATE_TBLVALUE,TEMPLATE_TBLVALUE_LEN) == 0 ) {
-		// current value in table: .$xxx
-		type = TEMPLATE_S_TBLVALUE;
+	} else if ( strncmp(content.c_str(),TMPL_LOOPVALUE,TMPL_LOOPVALUE_LEN) == 0 ) {
+		// current value in loop: .$xxx
+		type = TMPL_S_LOOPVALUE;
 		
-	} else if ( strncmp(content.c_str(),TEMPLATE_FOR,TEMPLATE_FOR_LEN) == 0 ) {
+	} else if ( strncmp(content.c_str(),TMPL_LOOP,TMPL_LOOP_LEN) == 0 ) {
 		// for begin: #FOR xxx
-		type = TEMPLATE_S_FOR;
-		content = tmpl.substr( begin+TEMPLATE_FOR_LEN, end-begin-TEMPLATE_FOR_LEN );
+		type = TMPL_S_LOOP;
+		content = tmpl.substr( begin+TMPL_LOOP_LEN, end-begin-TMPL_LOOP_LEN );
 		content.trim();
 		
-	} else if ( strcmp(content.c_str(),TEMPLATE_ENDFOR) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_ENDLOOP) == 0 ) {
 		// for end: #ENDFOR
-		type = TEMPLATE_S_ENDFOR;
+		type = TMPL_S_ENDLOOP;
 		
-	} else if ( strncmp(content.c_str(),TEMPLATE_IF,TEMPLATE_IF_LEN) == 0 ) {
+	} else if ( strncmp(content.c_str(),TMPL_IF,TMPL_IF_LEN) == 0 ) {
 		// if begin: #IF xxx
-		type = TEMPLATE_S_IF;
-		content = tmpl.substr( begin+TEMPLATE_IF_LEN, end-begin-TEMPLATE_IF_LEN );
+		type = TMPL_S_IF;
+		content = tmpl.substr( begin+TMPL_IF_LEN, end-begin-TMPL_IF_LEN );
 		content.trim();
 	
-	} else if ( strncmp(content.c_str(),TEMPLATE_ELSIF,TEMPLATE_ELSIF_LEN) == 0 ) {
+	} else if ( strncmp(content.c_str(),TMPL_ELSIF,TMPL_ELSIF_LEN) == 0 ) {
 		// elseif: #ELSIF xxx
-		type = TEMPLATE_S_ELSIF;
-		content = tmpl.substr( begin+TEMPLATE_ELSIF_LEN, end-begin-TEMPLATE_ELSIF_LEN );
+		type = TMPL_S_ELSIF;
+		content = tmpl.substr( begin+TMPL_ELSIF_LEN, end-begin-TMPL_ELSIF_LEN );
 		content.trim();
 	
-	} else if ( strcmp(content.c_str(),TEMPLATE_ELSE) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_ELSE) == 0 ) {
 		// else: #ELSE
-		type = TEMPLATE_S_ELSE;
+		type = TMPL_S_ELSE;
 	
-	} else if ( strcmp(content.c_str(),TEMPLATE_ENDIF) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_ENDIF) == 0 ) {
 		// if end: #ENDIF
-		type = TEMPLATE_S_ENDIF;
+		type = TMPL_S_ENDIF;
 	
-	} else if ( strncmp(content.c_str(),TEMPLATE_CURSOR,TEMPLATE_CURSOR_LEN) == 0 ) {
-		// current table cursor: %CURSOR
-		type = TEMPLATE_S_CURSOR;
+	} else if ( strncmp(content.c_str(),TMPL_CURSOR,TMPL_CURSOR_LEN) == 0 ) {
+		// current loop cursor: %CURSOR
+		type = TMPL_S_CURSOR;
 	
-	} else if ( strncmp(content.c_str(),TEMPLATE_ROWS,TEMPLATE_ROWS_LEN) == 0 ) {
-		// current table cursor: %ROWS
-		type = TEMPLATE_S_ROWS;
+	} else if ( strncmp(content.c_str(),TMPL_ROWS,TMPL_ROWS_LEN) == 0 ) {
+		// current loop cursor: %ROWS
+		type = TMPL_S_ROWS;
 
-	} else if ( strcmp(content.c_str(),TEMPLATE_DATE) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_DATE) == 0 ) {
 		// date: %DATE
-		type = TEMPLATE_S_DATE;
+		type = TMPL_S_DATE;
 	
-	} else if ( strcmp(content.c_str(),TEMPLATE_TIME) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_TIME) == 0 ) {
 		// time: %TIME
-		type = TEMPLATE_S_TIME;
+		type = TMPL_S_TIME;
 	
-	} else if ( strcmp(content.c_str(),TEMPLATE_SPACE) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_SPACE) == 0 ) {
 		// space char: %SPACE
-		type = TEMPLATE_S_SPACE;
+		type = TMPL_S_SPACE;
 	
-	} else if ( strcmp(content.c_str(),TEMPLATE_BLANK) == 0 ) {
+	} else if ( strcmp(content.c_str(),TMPL_BLANK) == 0 ) {
 		// blank string: %BLANK
-		type = TEMPLATE_S_BLANK;
+		type = TMPL_S_BLANK;
 	
-	} else  {
-		type = TEMPLATE_S_UNKNOWN;
+	} else {
+		type = TMPL_S_UNKNOWN;
 	}
 	
 	// return parsed length
 	exp = content;
-	return ( end-pos+TEMPLATE_END_LEN );
+	return ( end-pos+TMPL_END_LEN );
 }
 
 /// 分析表达式的值
 /// \param exp 表达式字符串
 /// \return 返回值为该表达式的值,若表达式非法则返回表达式字符串
 string Template::exp_value( const string &exp ) {
-	if ( strncmp(exp.c_str(),TEMPLATE_VALUE,TEMPLATE_VALUE_LEN) == 0 ) {
+	if ( strncmp(exp.c_str(),TMPL_VALUE,TMPL_VALUE_LEN) == 0 ) {
 		// simple value: $xxx
-		string val = exp.substr( TEMPLATE_VALUE_LEN );
+		string val = exp.substr( TMPL_VALUE_LEN );
 		return _sets[val];
 		
-	} else if ( strncmp(exp.c_str(),TEMPLATE_TBLVALUE,TEMPLATE_TBLVALUE_LEN) == 0 ) {
-		// current value in table: .$xxx
-		string val = exp.substr( TEMPLATE_TBLVALUE_LEN );
-		return this->table_value( val );
+	} else if ( strncmp(exp.c_str(),TMPL_LOOPVALUE,TMPL_LOOPVALUE_LEN) == 0 ) {
+		// current value in loop: .$xxx
+		string val = exp.substr( TMPL_LOOPVALUE_LEN );
+		return this->loop_value( val );
 		
-	} else if ( strncmp(exp.c_str(),TEMPLATE_CURSOR,TEMPLATE_CURSOR_LEN) == 0 ) {
-		// current table cursor: %CURSOR
-		size_t pos = exp.find( TEMPLATE_TBLSCOPE );
+	} else if ( strncmp(exp.c_str(),TMPL_CURSOR,TMPL_CURSOR_LEN) == 0 ) {
+		// current loop cursor: %CURSOR
+		size_t pos = exp.find( TMPL_LOOPSCOPE );
 		if ( pos != exp.npos ) {
-			string table_name = this->exp_value( exp.substr(pos+TEMPLATE_TBLSCOPE_LEN) );
-			int cursor = _tables[table_name].cursor;
+			string loop_name = this->exp_value( exp.substr(pos+TMPL_LOOPSCOPE_LEN) );
+			int cursor = _loops[loop_name].cursor;
 			return itos(cursor+1);
 		} else {
 			return itos(_cursor+1);
 		}
 	
-	} else if ( strncmp(exp.c_str(),TEMPLATE_ROWS,TEMPLATE_ROWS_LEN) == 0 ) {
-		// current table cursor: %ROWS
-		size_t pos = exp.find( TEMPLATE_TBLSCOPE );
+	} else if ( strncmp(exp.c_str(),TMPL_ROWS,TMPL_ROWS_LEN) == 0 ) {
+		// current loop cursor: %ROWS
+		size_t pos = exp.find( TMPL_LOOPSCOPE );
 		if ( pos != exp.npos ) {
-			string table_name = this->exp_value( exp.substr(pos+TEMPLATE_TBLSCOPE_LEN) );
-			return itos( _tables[table_name].rows );
+			string loop_name = this->exp_value( exp.substr(pos+TMPL_LOOPSCOPE_LEN) );
+			return itos( _loops[loop_name].rows );
 		} else {
-			return itos( _tables[_table].rows );
+			return itos( _loops[_loop].rows );
 		}
 
-	} else if ( strcmp(exp.c_str(),TEMPLATE_DATE) == 0 ) {
+	} else if ( strcmp(exp.c_str(),TMPL_DATE) == 0 ) {
 		// date: %DATE
 		return _date;
 	
-	} else if ( strcmp(exp.c_str(),TEMPLATE_TIME) == 0 ) {
+	} else if ( strcmp(exp.c_str(),TMPL_TIME) == 0 ) {
 		// time: %TIME
 		return _time;
 	
-	} else if ( strcmp(exp.c_str(),TEMPLATE_SPACE) == 0 ) {
+	} else if ( strcmp(exp.c_str(),TMPL_SPACE) == 0 ) {
 		// space char: %SPACE
 		return " ";
 	
-	} else if ( strcmp(exp.c_str(),TEMPLATE_BLANK) == 0 ) {
+	} else if ( strcmp(exp.c_str(),TMPL_BLANK) == 0 ) {
 		// blank string: %BLANK
 		return "";
 	
@@ -490,7 +369,7 @@ void Template::parse( const string &tmpl, ostream &output ) {
 	}
 	
 	// parse init
-	_table = "";
+	_loop = "";
 	_cursor = 0;
 	_lines = 0;
 	
@@ -502,63 +381,63 @@ void Template::parse( const string &tmpl, ostream &output ) {
 	int type;
 	int parsed;
 	
-	// search TEMPLATE_BEGIN in tmpl
-	while( (currpos=tmpl.find(TEMPLATE_BEGIN,lastpos)) != tmpl.npos ) {
-		// output html before TEMPLATE_BEGIN
+	// search TMPL_BEGIN in tmpl
+	while( (currpos=tmpl.find(TMPL_BEGIN,lastpos)) != tmpl.npos ) {
+		// output html before TMPL_BEGIN
 		output << tmpl.substr( lastpos, currpos-lastpos );
 		
 		// log current position
-		if ( _debug == TEMPLATE_OUTPUT_DEBUG ) {
+		if ( _debug == TMPL_OUTPUT_DEBUG ) {
 			String orightml = tmpl.substr( lastpos, currpos-lastpos );
-			_lines += orightml.count( TEMPLATE_NEWLINE );
+			_lines += orightml.count( TMPL_NEWLINE );
 		}
 		
-		// get script content between TEMPLATE_BEGIN and TEMPLATE_END
+		// get script content between TMPL_BEGIN and TMPL_END
 		parsed = this->parse_script( tmpl, currpos, exp, type );
 		
 		if ( parsed < 0 ) {
-			// can't find TEMPLATE_END
+			// can't find TMPL_END
 			lastpos = currpos;
-			this->error_log( _lines, "Error: Can't find TEMPLATE_END" );
+			this->error_log( _lines, "Error: Can't find TMPL_END" );
 			break;
 		}
 		
 		// parse by script type
 		switch ( type ) {
-			case TEMPLATE_S_VALUE:
+			case TMPL_S_VALUE:
 				// replace
-			case TEMPLATE_S_DATE:
+			case TMPL_S_DATE:
 				// replace with date
-			case TEMPLATE_S_TIME:
+			case TMPL_S_TIME:
 				// replace with time
-			case TEMPLATE_S_SPACE:
+			case TMPL_S_SPACE:
 				// replace with space char
-			case TEMPLATE_S_BLANK:
+			case TMPL_S_BLANK:
 				// replace with blank string
 				output << this->exp_value( exp );
 				break;
 
-			case TEMPLATE_S_IF:
+			case TMPL_S_IF:
 				// condition replace
 				parsed = this->parse_if( tmpl.substr(currpos), output, true, exp, parsed );
 				break;
 				
-			case TEMPLATE_S_FOR:
+			case TMPL_S_LOOP:
 				// cycle replace
-				parsed = this->parse_for( tmpl.substr(currpos), output, true, exp, parsed );
-				// restore table status
-				_table = "";
+				parsed = this->parse_loop( tmpl.substr(currpos), output, true, exp, parsed );
+				// restore loop status
+				_loop = "";
 				_cursor = 0;
 				break;
 
-			case TEMPLATE_S_UNKNOWN:
+			case TMPL_S_UNKNOWN:
 				// unknown script, maybe html code
 				this->error_log( _lines, "Warning: Unknown script, in parse()" );
 				
 				// for syntax error
 				size_t backlen;
-				if ( (backlen=exp.find(TEMPLATE_BEGIN)) != exp.npos )
-					parsed = backlen+TEMPLATE_BEGIN_LEN;
+				if ( (backlen=exp.find(TMPL_BEGIN)) != exp.npos )
+					parsed = backlen+TMPL_BEGIN_LEN;
 					
 				output << tmpl.substr( currpos, parsed );
 				break;
@@ -587,37 +466,37 @@ bool Template::compare( const string &exp ) {
 	// supported: ==,!=,<=,<,>=,>
 	string cmpop;
 	size_t oppos;
-	template_cmptype optype;
+	tmpl_cmptype optype;
 	
-	if ( (oppos=exp.find(TEMPLATE_EQ)) != exp.npos ) {
+	if ( (oppos=exp.find(TMPL_EQ)) != exp.npos ) {
 		// ==
-		cmpop = TEMPLATE_EQ;
-		optype = TEMPLATE_C_EQ;
+		cmpop = TMPL_EQ;
+		optype = TMPL_C_EQ;
 	
-	} else if ( (oppos=exp.find(TEMPLATE_NE)) != exp.npos ) {
+	} else if ( (oppos=exp.find(TMPL_NE)) != exp.npos ) {
 		// !=
-		cmpop = TEMPLATE_NE;
-		optype = TEMPLATE_C_NE;
+		cmpop = TMPL_NE;
+		optype = TMPL_C_NE;
 	
-	} else if ( (oppos=exp.find(TEMPLATE_LE)) != exp.npos ) {
+	} else if ( (oppos=exp.find(TMPL_LE)) != exp.npos ) {
 		// <=
-		cmpop = TEMPLATE_LE;
-		optype = TEMPLATE_C_LE;
+		cmpop = TMPL_LE;
+		optype = TMPL_C_LE;
 	
-	} else if ( (oppos=exp.find(TEMPLATE_LT)) != exp.npos ) {
+	} else if ( (oppos=exp.find(TMPL_LT)) != exp.npos ) {
 		// <
-		cmpop = TEMPLATE_LT;
-		optype = TEMPLATE_C_LT;
+		cmpop = TMPL_LT;
+		optype = TMPL_C_LT;
 	
-	} else if ( (oppos=exp.find(TEMPLATE_GE)) != exp.npos ) {
+	} else if ( (oppos=exp.find(TMPL_GE)) != exp.npos ) {
 		// >=
-		cmpop = TEMPLATE_GE;
-		optype = TEMPLATE_C_GE;
+		cmpop = TMPL_GE;
+		optype = TMPL_C_GE;
 	
-	} else if ( (oppos=exp.find(TEMPLATE_GT)) != exp.npos ) {
+	} else if ( (oppos=exp.find(TMPL_GT)) != exp.npos ) {
 		// >
-		cmpop = TEMPLATE_GT;
-		optype = TEMPLATE_C_GT;
+		cmpop = TMPL_GT;
+		optype = TMPL_C_GT;
 	
 	} else {
 		// read value, compare and return
@@ -649,17 +528,17 @@ bool Template::compare( const string &exp ) {
 
 	// return
 	switch ( optype ) {
-		case TEMPLATE_C_EQ:
+		case TMPL_C_EQ:
 			return ( cmp==0 ) ? true : false;
-		case TEMPLATE_C_NE:
+		case TMPL_C_NE:
 			return ( cmp!=0 ) ? true : false;
-		case TEMPLATE_C_LE:
+		case TMPL_C_LE:
 			return ( cmp<=0 ) ? true : false;
-		case TEMPLATE_C_LT:
+		case TMPL_C_LT:
 			return ( cmp<0 ) ? true : false;
-		case TEMPLATE_C_GE:
+		case TMPL_C_GE:
 			return ( cmp>=0 ) ? true : false;
-		case TEMPLATE_C_GT:
+		case TMPL_C_GT:
 			return ( cmp>0 ) ? true : false;
 		default:
 			return false;
@@ -671,38 +550,38 @@ bool Template::compare( const string &exp ) {
 /// \retval true 条件表达式成立
 /// \retval false 条件表达式不成立
 bool Template::check_if( const string &exp ) {
-	template_logictype exp_type = TEMPLATE_L_NONE;
+	tmpl_logictype exp_type = TMPL_L_NONE;
 	String exps;
 
 	// check expression type
-	if ( strncmp(exp.c_str(),TEMPLATE_AND,TEMPLATE_AND_LEN) == 0 ) {
-		exp_type = TEMPLATE_L_AND;
-		exps = exp.substr( TEMPLATE_AND_LEN );
-	} else if ( strncmp(exp.c_str(),TEMPLATE_OR,TEMPLATE_OR_LEN) == 0 ) {
-		exp_type = TEMPLATE_L_OR;
-		exps = exp.substr( TEMPLATE_OR_LEN );
+	if ( strncmp(exp.c_str(),TMPL_AND,TMPL_AND_LEN) == 0 ) {
+		exp_type = TMPL_L_AND;
+		exps = exp.substr( TMPL_AND_LEN );
+	} else if ( strncmp(exp.c_str(),TMPL_OR,TMPL_OR_LEN) == 0 ) {
+		exp_type = TMPL_L_OR;
+		exps = exp.substr( TMPL_OR_LEN );
 	}
 
 	// none logic expression
-	if ( exp_type == TEMPLATE_L_NONE )
+	if ( exp_type == TMPL_L_NONE )
 		return this->compare( exp );
 
-	// check TEMPLATE_SUBBEGIN/TEMPLATE_SUBEND
+	// check TMPL_SUBBEGIN/TMPL_SUBEND
 	exps.trim();
 	size_t explen = exps.length();
-	if ( exps.substr(0,TEMPLATE_SUBBEGIN_LEN)!=TEMPLATE_SUBBEGIN ||
-		 exps.substr(explen-TEMPLATE_SUBEND_LEN)!=TEMPLATE_SUBEND ) {
-		this->error_log( _lines, "Warning: Maybe wrong TEMPLATE_AND or TEMPLATE_OR script" );
+	if ( exps.substr(0,TMPL_SUBBEGIN_LEN)!=TMPL_SUBBEGIN ||
+		 exps.substr(explen-TMPL_SUBEND_LEN)!=TMPL_SUBEND ) {
+		this->error_log( _lines, "Warning: Maybe wrong TMPL_AND or TMPL_OR script" );
 		return this->compare( exp );
 	}
 		
 	// split expressions list
-	exps = exps.substr( TEMPLATE_SUBBEGIN_LEN, explen-TEMPLATE_SUBBEGIN_LEN-TEMPLATE_SUBEND_LEN );
-	vector<String> explist = exps.split( TEMPLATE_SPLIT );
+	exps = exps.substr( TMPL_SUBBEGIN_LEN, explen-TMPL_SUBBEGIN_LEN-TMPL_SUBEND_LEN );
+	vector<String> explist = exps.split( TMPL_SPLIT );
 
 	// judge
-	if ( exp_type == TEMPLATE_L_AND ) {
-		// TEMPLATE_AND
+	if ( exp_type == TMPL_L_AND ) {
+		// TMPL_AND
 		for ( unsigned int i=0; i<explist.size(); i++ ) {
 			explist[i].trim();
 			if ( !this->compare(explist[i]) )
@@ -711,7 +590,7 @@ bool Template::check_if( const string &exp ) {
 		return true;
 		
 	} else {
-		// TEMPLATE_OR
+		// TMPL_OR
 		for ( size_t i=0; i<explist.size(); i++ ) {
 			explist[i].trim();
 			if ( this->compare(explist[i]) )
@@ -731,8 +610,8 @@ bool Template::check_if( const string &exp ) {
 /// \param parsed_length 已分析的条件脚本表达式长度
 /// \return 返回值为本次分析的字符串长度
 size_t Template::parse_if( const string &tmpl, ostream &output, 
-					  const bool parent_state, const string &parsed_exp,
-					  const int parsed_length ) {
+	const bool parent_state, const string &parsed_exp, const int parsed_length ) 
+{
 	// parsed length
 	size_t length = parsed_length;
 		
@@ -759,51 +638,51 @@ size_t Template::parse_if( const string &tmpl, ostream &output,
 	int type;
 	int parsed;
 	
-	while( (currpos=tmpl.find(TEMPLATE_BEGIN,lastpos)) != tmpl.npos ) {
-		// output html before TEMPLATE_BEGIN if status valid
+	while( (currpos=tmpl.find(TMPL_BEGIN,lastpos)) != tmpl.npos ) {
+		// output html before TMPL_BEGIN if status valid
 		if ( status )
 			output << tmpl.substr( lastpos, currpos-lastpos );
 		length += ( currpos-lastpos );
 		
 		// log current position
-		if ( _debug == TEMPLATE_OUTPUT_DEBUG ) {
+		if ( _debug == TMPL_OUTPUT_DEBUG ) {
 			String orightml = tmpl.substr( lastpos, currpos-lastpos );
-			_lines += orightml.count( TEMPLATE_NEWLINE );
+			_lines += orightml.count( TMPL_NEWLINE );
 		}
 		
-		// get script content between TEMPLATE_BEGIN and TEMPLATE_END
+		// get script content between TMPL_BEGIN and TMPL_END
 		parsed = this->parse_script( tmpl, currpos, exp, type );
 		
 		if ( parsed < 0 ) {
-			// can't find TEMPLATE_END
-			this->error_log( _lines, "Error: Can't find TEMPLATE_END" );
+			// can't find TMPL_END
+			this->error_log( _lines, "Error: Can't find TMPL_END" );
 			lastpos = currpos;
 			break;
 		}
 		
 		// parse by script type
 		switch ( type ) {
-			case TEMPLATE_S_VALUE:
+			case TMPL_S_VALUE:
 				// replace if status is true
-			case TEMPLATE_S_TBLVALUE:
-				// replace with table value if status is true
-			case TEMPLATE_S_CURSOR:
+			case TMPL_S_LOOPVALUE:
+				// replace with loop value if status is true
+			case TMPL_S_CURSOR:
 				// replace with cursor
-			case TEMPLATE_S_ROWS:
+			case TMPL_S_ROWS:
 				// replace with rows
-			case TEMPLATE_S_DATE:
+			case TMPL_S_DATE:
 				// replace with date
-			case TEMPLATE_S_TIME:
+			case TMPL_S_TIME:
 				// replace with time
-			case TEMPLATE_S_SPACE:
+			case TMPL_S_SPACE:
 				// replace with space char
-			case TEMPLATE_S_BLANK:
+			case TMPL_S_BLANK:
 				// replace with blank string
 				if ( status )
 					output << this->exp_value( exp );
 				break;
 
-			case TEMPLATE_S_ELSIF:
+			case TMPL_S_ELSIF:
 				// check and set status
 				if ( effected ) {
 					// something effected before
@@ -818,7 +697,7 @@ size_t Template::parse_if( const string &tmpl, ostream &output,
 				}
 				break;
 
-			case TEMPLATE_S_ELSE:
+			case TMPL_S_ELSE:
 				// check and set status
 				if ( effected ) {
 					// something effected before
@@ -830,40 +709,40 @@ size_t Template::parse_if( const string &tmpl, ostream &output,
 				}
 				break;
 
-			case TEMPLATE_S_ENDIF:
+			case TMPL_S_ENDIF:
 				// parsed length
 				length += parsed;
 				// exit function
 				return length;
 					
-			case TEMPLATE_S_IF:
+			case TMPL_S_IF:
 				// sub condition replace
 				parsed = this->parse_if( tmpl.substr(currpos), output, status, exp, parsed );
 				break;
 				
-			case TEMPLATE_S_FOR: { // make compiler happy
-				// backup current table status
-				string parent_table = _table;
+			case TMPL_S_LOOP: { // make compiler happy
+				// backup current loop status
+				string parent_loop = _loop;
 				int parent_cursor = _cursor;
 				
 				// sub cycle replace
-				parsed = this->parse_for( tmpl.substr(currpos), output, status, exp, parsed );
+				parsed = this->parse_loop( tmpl.substr(currpos), output, status, exp, parsed );
 				
-				// restore table status
-				_table = parent_table;
+				// restore loop status
+				_loop = parent_loop;
 				_cursor = parent_cursor;
-				_tables[_table].cursor = _cursor;
+				_loops[_loop].cursor = _cursor;
 				}
 				break;
 
-			case TEMPLATE_S_UNKNOWN:
+			case TMPL_S_UNKNOWN:
 				// unknown script, maybe html code
 				this->error_log( _lines, "Warning: Unknown script, in parse_if()" );
 
 				// for syntax error
 				size_t backlen;
-				if ( (backlen=exp.find(TEMPLATE_BEGIN)) != exp.npos )
-					parsed = backlen+TEMPLATE_BEGIN_LEN;
+				if ( (backlen=exp.find(TMPL_BEGIN)) != exp.npos )
+					parsed = backlen+TMPL_BEGIN_LEN;
 
 				if ( status )
 					output << tmpl.substr( currpos, parsed );
@@ -880,8 +759,8 @@ size_t Template::parse_if( const string &tmpl, ostream &output,
 		lastpos = currpos + parsed;
 	}
 	
-	// can not find TEMPLATE_ENDIF
-	this->error_log( _lines, "Error: Can't find TEMPLATE_ENDIF" );
+	// can not find TMPL_ENDIF
+	this->error_log( _lines, "Error: Can't find TMPL_ENDIF" );
 
 	// output tail html
 	if ( status )
@@ -892,43 +771,43 @@ size_t Template::parse_if( const string &tmpl, ostream &output,
 }
 
 /// 检查循环语句是否有效
-/// \param table 循环表格名称
-/// \retval true 表格已定义
+/// \param loop 循环循环名称
+/// \retval true 循环已定义
 /// \retval false 未定义
-bool Template::check_for( const string &tablename ) {
-	string table = this->exp_value( tablename );
+bool Template::check_loop( const string &loopname ) {
+	string loop = this->exp_value( loopname );
 	
-	if ( _tables.find(table) != _tables.end() && _tables[table].rows > 0 ) {
+	if ( _loops.find(loop) != _loops.end() && _loops[loop].rows > 0 ) {
 		return true;
 	} else {
-		this->error_log( _lines, "Warning: table " + tablename + " \""+table+
-						   		 "\" not defined or not set data" );
+		this->error_log( _lines, "Warning: loop " + loopname + " \""+loop+
+			"\" not defined or not set data" );
 		return false;
 	}
 }
 
-/// 返回表格中指定位置字段的值
-/// \param fleid 表格变量字段名
+/// 返回循环中指定位置字段的值
+/// \param fleid 循环变量字段名
 /// \return 若读取成功返回值字符串,否则返回空字符串
-string Template::table_value( const string &field ) {
-	// get table info
-	size_t pos = field.find( TEMPLATE_TBLSCOPE );
+string Template::loop_value( const string &field ) {
+	// get loop info
+	size_t pos = field.find( TMPL_LOOPSCOPE );
 	if ( pos != field.npos ) {
-		string table_name = this->exp_value( field.substr(pos+TEMPLATE_TBLSCOPE_LEN) );
+		string loop_name = this->exp_value( field.substr(pos+TMPL_LOOPSCOPE_LEN) );
 		string field_name = field.substr( 0, pos );
-		int cursor = _tables[table_name].cursor;
+		int cursor = _loops[loop_name].cursor;
 
 		// return value
-		int col = this->field_pos( table_name, field_name );
-		if ( col!=-1 && cursor<_tables[table_name].rows )
-			return _tables[table_name].datas[cursor][col];
+		int col = this->field_pos( loop_name, field_name );
+		if ( col!=-1 && cursor<_loops[loop_name].rows )
+			return _loops[loop_name].datas[cursor][col];
 		else
 			return string( "" );
 	} else {
 		// return value
-		int col = this->field_pos( _table, field );
-		if ( col!=-1 && _cursor<_tables[_table].rows )
-			return _tables[_table].datas[_cursor][col];
+		int col = this->field_pos( _loop, field );
+		if ( col!=-1 && _cursor<_loops[_loop].rows )
+			return _loops[_loop].datas[_cursor][col];
 		else
 			return string( "" );
 	}
@@ -941,9 +820,9 @@ string Template::table_value( const string &field ) {
 /// \param parsed_exp 已分析的循环脚本表达式
 /// \param parsed_length 已分析的循环脚本表达式长度
 /// \return 返回值为本次分析的字符串长度
-size_t Template::parse_for( const string &tmpl, ostream &output, 
-					   const bool parent_state, const string &parsed_exp,
-					   const int parsed_length ) {
+size_t Template::parse_loop( const string &tmpl, ostream &output, 
+	const bool parent_state, const string &parsed_exp, const int parsed_length ) 
+{
 	// parsed length
 	size_t length = parsed_length;
 		
@@ -951,7 +830,7 @@ size_t Template::parse_for( const string &tmpl, ostream &output,
 	bool status;
 	if ( parent_state == false )
 		status = false;
-	else if ( this->check_for(parsed_exp) )
+	else if ( this->check_loop(parsed_exp) )
 		status = true;
 	else
 		status = false;
@@ -964,69 +843,69 @@ size_t Template::parse_for( const string &tmpl, ostream &output,
 	size_t lastpos = parsed_length;
 	size_t currpos = parsed_length;
 	
-	// current table name
-	string table = this->exp_value( parsed_exp );
-	_table = table;
-	_tables[_table].cursor = 0;
+	// current loop name
+	string loop = this->exp_value( parsed_exp );
+	_loop = loop;
+	_loops[_loop].cursor = 0;
 
 	// for parse_script()		
 	string exp;
 	int type;
 	int parsed;
 
-	while( (currpos=tmpl.find(TEMPLATE_BEGIN,lastpos)) != tmpl.npos ) {
-		// output html before TEMPLATE_BEGIN if status valid
+	while( (currpos=tmpl.find(TMPL_BEGIN,lastpos)) != tmpl.npos ) {
+		// output html before TMPL_BEGIN if status valid
 		if ( status )
 			output << tmpl.substr( lastpos, currpos-lastpos );
 		length += ( currpos-lastpos );
 		
 		// log current position
-		if ( !cycled && _debug==TEMPLATE_OUTPUT_DEBUG ) {
+		if ( !cycled && _debug==TMPL_OUTPUT_DEBUG ) {
 			String orightml = tmpl.substr( lastpos, currpos-lastpos );
-			_lines += orightml.count( TEMPLATE_NEWLINE );
+			_lines += orightml.count( TMPL_NEWLINE );
 		}
 		
-		// get script content between TEMPLATE_BEGIN and TEMPLATE_END
+		// get script content between TMPL_BEGIN and TMPL_END
 		parsed = this->parse_script( tmpl, currpos, exp, type );
 		
 		if ( parsed < 0 ) {
-			// can't find TEMPLATE_END
+			// can't find TMPL_END
 			if ( !cycled )
-				this->error_log( _lines, "Error: Can't find TEMPLATE_END" );
+				this->error_log( _lines, "Error: Can't find TMPL_END" );
 			lastpos = currpos;
 			break;
 		}
 		
-		// current table cursor
+		// current loop cursor
 		_cursor = cursor;
 
 		// parse by script type
 		switch ( type ) {
-			case TEMPLATE_S_VALUE:
+			case TMPL_S_VALUE:
 				// replace
-			case TEMPLATE_S_TBLVALUE:
-				// replace with table value in table
-			case TEMPLATE_S_CURSOR:
+			case TMPL_S_LOOPVALUE:
+				// replace with loop value in loop
+			case TMPL_S_CURSOR:
 				// replace with cursor
-			case TEMPLATE_S_ROWS:
+			case TMPL_S_ROWS:
 				// replace with rows				
-			case TEMPLATE_S_DATE:
+			case TMPL_S_DATE:
 				// replace with date
-			case TEMPLATE_S_TIME:
+			case TMPL_S_TIME:
 				// replace with time
-			case TEMPLATE_S_SPACE:
+			case TMPL_S_SPACE:
 				// replace with space char
-			case TEMPLATE_S_BLANK:
+			case TMPL_S_BLANK:
 				// replace with blank string
-				if ( status )
+				if ( status )           
 					output << this->exp_value( exp );
 				break;
 
-			case TEMPLATE_S_ENDFOR:
+			case TMPL_S_ENDLOOP:
 				// at the end of this cycle
 				++cursor; // data cursor
-				_tables[_table].cursor = cursor;
-				if ( status && cursor<_tables[table].rows ) {
+				_loops[_loop].cursor = cursor;
+				if ( status && cursor<_loops[loop].rows ) {
 					// next cycle
 					length = start_len;		// reset parsed length
 					lastpos = start_pos;	// reset start position
@@ -1039,29 +918,29 @@ size_t Template::parse_for( const string &tmpl, ostream &output,
 					return length;
 				}
 					
-			case TEMPLATE_S_IF:
+			case TMPL_S_IF:
 				// sub condition replace
 				parsed = this->parse_if( tmpl.substr(currpos), output, status, exp, parsed );
 				break;
 				
-			case TEMPLATE_S_FOR:
+			case TMPL_S_LOOP:
 				// sub cycle replace
-				parsed = this->parse_for( tmpl.substr(currpos), output, status, exp, parsed );
-				// restore table status
-				_table = table;
+				parsed = this->parse_loop( tmpl.substr(currpos), output, status, exp, parsed );
+				// restore loop status
+				_loop = loop;
 				_cursor = cursor;
-				_tables[_table].cursor = _cursor;
+				_loops[_loop].cursor = _cursor;
 				break;
 
-			case TEMPLATE_S_UNKNOWN:
+			case TMPL_S_UNKNOWN:
 				// unknown script, maybe html code
 				if ( !cycled )
-					this->error_log( _lines, "Warning: Unknown script, in parse_for()" );
+					this->error_log( _lines, "Warning: Unknown script, in parse_loop()" );
 
 				// for syntax error
 				size_t backlen;
-				if ( (backlen=exp.find(TEMPLATE_BEGIN)) != exp.npos )
-					parsed = backlen+TEMPLATE_BEGIN_LEN;
+				if ( (backlen=exp.find(TMPL_BEGIN)) != exp.npos )
+					parsed = backlen+TMPL_BEGIN_LEN;
 
 				if ( status )
 					output << tmpl.substr( currpos, parsed );
@@ -1070,7 +949,7 @@ size_t Template::parse_for( const string &tmpl, ostream &output,
 			default:
 				// syntax error
 				if ( !cycled )
-					this->error_log( _lines, "Error: Unexpected script, in parse_for()" );
+					this->error_log( _lines, "Error: Unexpected script, in parse_loop()" );
 		}
 
 		// parsed length
@@ -1079,8 +958,8 @@ size_t Template::parse_for( const string &tmpl, ostream &output,
 		lastpos = currpos + parsed;
 	}
 	
-	// can not find TEMPLATE_ENDFOR
-	this->error_log( _lines, "Error: Can't find TEMPLATE_ENDFOR" );
+	// can not find TMPL_ENDLOOP
+	this->error_log( _lines, "Error: Can't find TMPL_ENDLOOP" );
 
 	// output tail html
 	if ( status )
@@ -1106,20 +985,20 @@ void Template::error_log( const size_t lines, const string &error ) {
 void Template::parse_log( ostream &output ) {
 	output << endl;
 	output << "<!-- Generated by waTemplate " << _date << " " << _time << endl
-		   << "  Templet source: " << _tmplfile << endl
-		   << "  Tables: " << _tables.size() << endl;
+		<< "  Templet source: " << _tmplfile << endl
+		<< "  Loops: " << _loops.size() << endl;
 
-	for ( map<string,template_table>::const_iterator i=_tables.begin(); i!=_tables.end(); ++i ) {
+	for ( map<string,tmpl_loop>::const_iterator i=_loops.begin(); i!=_loops.end(); ++i ) {
 		if ( i->first != "" ) {
-			output << "    Table " << i->first
-				   << "\t\t" << (i->second).cursor << " rows" << endl;
+			output << "    Loop " << i->first
+				<< "\t\t" << (i->second).cursor << " rows" << endl;
 		}
 	}
 
 	output << "  Errors: " << _errlog.size() << endl;
 	for ( multimap<int,string>::const_iterator i=_errlog.begin(); i!=_errlog.end(); ++i ) {
 		output << "    Line " << i->first+1
-			   << "\t\t" << i->second << endl;
+			<< "\t\t" << i->second << endl;
 	}
 			   
 	output << "-->";
@@ -1137,33 +1016,34 @@ string Template::html() {
 
 /// 输出HTML到stdout
 /// \param mode 是否输出调试信息
-/// - Template::TEMPLATE_OUTPUT_DEBUG 输出调试信息
-/// - Template::TEMPLATE_OUTPUT_RELEASE 不输出调试信息
+/// - Template::TMPL_OUTPUT_DEBUG 输出调试信息
+/// - Template::TMPL_OUTPUT_RELEASE 不输出调试信息
 /// - 默认为不输出调试信息
 void Template::print( const output_mode mode ) {
 	_debug = mode;
 	this->parse( _tmpl, std::cout );
-	if ( _debug == TEMPLATE_OUTPUT_DEBUG ) 
+	if ( _debug == TMPL_OUTPUT_DEBUG ) 
 		this->parse_log( std::cout );
 }
 
 /// 输出HTML到文件
 /// \param file 输出文件名
 /// \param mode 是否输出调试信息
-/// - Template::TEMPLATE_OUTPUT_DEBUG 输出调试信息
-/// - Template::TEMPLATE_OUTPUT_RELEASE 不输出调试信息
+/// - Template::TMPL_OUTPUT_DEBUG 输出调试信息
+/// - Template::TMPL_OUTPUT_RELEASE 不输出调试信息
 /// - 默认为不输出调试信息
 /// \param permission 文件属性参数，默认为0666
 /// \retval true 文件输出成功
 /// \retval false 失败
 bool Template::print( const string &file, const output_mode mode,
-				 const mode_t permission ) {
+	const mode_t permission ) 
+{
 	ofstream outfile( file.c_str(), ios::trunc|ios::out );
 	if ( outfile ) {
 		// parse
 		_debug = mode;
 		this->parse( _tmpl, outfile );
-		if ( _debug == TEMPLATE_OUTPUT_DEBUG ) 
+		if ( _debug == TMPL_OUTPUT_DEBUG ) 
 			this->parse_log( outfile );
 		outfile.close();
 		

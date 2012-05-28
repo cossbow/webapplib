@@ -1,5 +1,5 @@
 # /// \file Makefile 
-# /// WEB Application Library Makefile
+# /// Web Application Library Makefile
 
 ################################################################################
 # 使用方法
@@ -9,13 +9,13 @@
 # 使用 make uninstall 命令删除系统目录中的库文件、库头文件；
 # 使用 make clean 命令清除当前目录的编译结果及临时文件；
 # 使用动态库时（默认情况下）必须执行 make install 将库文件安装到系统目录，
-# 在项目中使用 webedvlib，Makefile 内容可参考 Makefile.example；
+# 在项目中使用 webapplib，Makefile 内容可参考 Makefile.example；
 # 不具备 root 权限的用户可以将本 Makefile 中 $(LIBPATH) 改为其他目录，
 # 并将该目录添加到执行文件运行环境的环境变量 LD_LIBRARY_PATH 中.
 
 ################################################################################
 # 当前WEB开发库版本号 $(WEBAPPLIB_VERSION)
-WEBAPPLIB_VERSION = 0.9
+WEBAPPLIB_VERSION = 1.0
 
 # C++ 编译器命令
 CXX = g++
@@ -35,26 +35,38 @@ LIBPATH = /usr/local/lib
 SYSLIB = /usr/lib
 
 ################################################################################
+# 是否编译 MysqlClient，若不编译 MysqlClient 则注释本变量
+MYSQL = yes
 # MySQL 头文件路径
-MYSQLINC = -I/usr/local/include/mysql
+MYSQLINC = -I/usr/include/mysql
 # MySQL 库文件路径及链接参数
-MYSQLLIB = -L/usr/local/lib/mysql -lmysqlclient -lm -lz
+MYSQLLIB = -L/usr/lib/mysql -lmysqlclient -lm -lz
 
 ################################################################################
 # 开发库对象文件列表
-LIBS = String Encode Cgi FileSystem MysqlClient DateTime Template HttpClient Utility TextFile ConfigFile
+LIBS = String Encode Cgi FileSystem DateTime Template HttpClient TextFile ConfigFile Utility
+
+# 是否编译MysqlClient组件
+ifdef MYSQL
+LIBS += MysqlClient
+else
+CXXFLAGS += -D_WEBAPPLIB_NOMYSQL
+MYSQLINC :=
+MYSQLLIB :=
+endif
+
 OBJS = $(foreach n,$(LIBS),wa$(n).o)
 	
 # 开发库头文件列表
 WEBAPPINC = webapplib.h $(OBJS:%.o=%.h)
 # 开发库静态库文件名
-WEVAPPLIB = libwebapp.a.$(WEBAPPLIB_VERSION)
+WEBAPPLIB = libwebapp.a.$(WEBAPPLIB_VERSION)
 # 开发库动态链接库文件名
 WEBAPPDLL = libwebapp.so.$(WEBAPPLIB_VERSION)
 
 ################################################################################
 # 编译目标
-all: $(WEVAPPLIB) $(WEBAPPDLL)
+all: $(WEBAPPLIB) $(WEBAPPDLL)
 
 # 编译开发库对象文件
 $(OBJS): %.o: %.cpp %.h
@@ -63,9 +75,9 @@ $(OBJS): %.o: %.cpp %.h
 	$(CXX) $(CXXFLAGS) -c $(@:%.o=%.cpp) $(MYSQLINC)
 
 # 生成静态库文件
-$(WEVAPPLIB): $(OBJS)
+$(WEBAPPLIB): $(OBJS)
 	@echo ""
-	@echo "Build $(WEVAPPLIB) ..."
+	@echo "Build $(WEBAPPLIB) ..."
 	$(AR) rc $@ $(OBJS)
 
 # 生成动态库文件
