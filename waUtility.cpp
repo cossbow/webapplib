@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdarg>
+#include <set>
 
 // for host_addr()
 #include <unistd.h>
@@ -47,6 +48,68 @@ unsigned int string_hash( const string &str ) {
 	}
 	return hash;
 }	
+
+/// \ingroup waUtility 
+/// \fn string replace_text( const string &text, const map<string,string> &replace )
+/// 全文词表替换，兼容GBK汉字
+/// \param text 字符串原文
+/// \param replace 替换对应词表
+/// \return 替换后结果
+string replace_text( const string &text, const map<string,string> &replace ) {
+	// replace size list 
+	map<string,string>::const_iterator it = replace.begin();
+	set<size_t> size_set;
+	for ( ; it!=replace.end(); ++it ) {
+		if ( (it->first) != "" ) {
+			size_set.insert( (it->first).length() );
+		}
+	}
+	vector<size_t> size_list( size_set.begin(), size_set.end() );
+	std::sort( size_list.begin(), size_list.end() );
+	
+	// repalce loop
+	size_t p = 0;
+	string token, result;
+	result.reserve( text.length()*2 );
+
+	while ( p < text.length() ) {
+		for ( size_t i=0; i<size_list.size(); ++i ) {
+			size_t s = size_list[i];
+
+			// next token
+			size_t border = p + s;
+			if ( text.length()>border && isgbk(text[border-1],text[border]) )
+				token = String(text).w_substr( p, s );
+			else
+				token = text.substr( p, s );
+
+			it = replace.find( token );
+
+			// found
+			if ( it != replace.end() ) {
+				result.append( it->second );
+				p += token.length();
+				break;
+			}
+
+			// not found
+			if ( i == size_list.size()-1 ) {
+				if ( text.length()>(p+1) && isgbk(text[p],text[p+1]) ) {
+					// step next GBK word
+					result += text[p];
+					result += text[p+1];
+					p += 2;
+				} else {
+					// step next char
+					result += text[p];
+					p += 1;
+				}
+			}
+		}
+	};
+	
+	return result;
+}
 
 // 判断是否标点符号字符
 bool is_punctuation( unsigned char c ) {

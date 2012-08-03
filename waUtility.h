@@ -7,6 +7,7 @@
 #define _WEBAPPLIB_UTILITY_H_ 
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -68,6 +69,9 @@ enum extract_option {
 
 /// 返回字符串HASH值，基于DJB HASH算法
 unsigned int string_hash( const string &str );
+
+/// 全文词表替换，兼容GBK汉字
+string replace_text( const string &text, const map<string,string> &replace );
 
 /// 提取HTML代码正文
 string extract_html( const string &html );
