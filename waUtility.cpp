@@ -27,15 +27,15 @@ using namespace std;
 namespace webapp {
 	
 /// \ingroup waUtility 
-/// \fn unsigned int string_hash( const string &str )
+/// \fn size_t string_hash( const string &str )
 /// 返回字符串HASH值，基于DJB HASH算法
 /// Perl兼容实现版本 string_hash.pl
 /// JavaScript兼容实现版本 string_hash.js
 /// \param str 源字符串
 /// \return 字符串HASH结果，无符号整数
-unsigned int string_hash( const string &str ) {
+size_t string_hash( const string &str ) {
 	unsigned char ch;
-	unsigned int hash = 5381;
+	size_t hash = 5381;
 	int len = str.length();
 	char *p = const_cast<char*>( str.c_str() );
 	
@@ -126,10 +126,10 @@ string sbc_to_dbc( const string &sbc_string ) {
 	if ( sbc_string == "" ) return dbc;
 	
 	char sbc_chr[3];
-	unsigned int len = sbc_string.length();
+	size_t len = sbc_string.length();
 
 	dbc.reserve( len );
-	for ( unsigned int i=0; i<len; ++i ) {
+	for ( size_t i=0; i<len; ++i ) {
 		if ( i<(len-1) && isgbk(sbc_string[i],sbc_string[i+1]) ) {
 			// double byte char
 			sbc_chr[0] = sbc_string[i];
@@ -166,7 +166,7 @@ string extract_html( const string &html ) {
 	string text, curr_tag;
 	text.reserve( html.length() );
 	
-	for ( unsigned int i=0; i<html.length(); ++i ) {
+	for ( size_t i=0; i<html.length(); ++i ) {
 		if ( !in_html && html[i]=='<' ) {
 			// <...
 			in_html = true;
@@ -216,30 +216,25 @@ string extract_text( const string &text, const int option, const size_t len ) {
 	string extracted;
 	extracted.reserve( text.length() );
 	
-	for ( unsigned int i=0; i<converted.length(); ++i ) {
+	for ( size_t i=0; i<converted.length(); ++i ) {
 		unsigned char c = converted[i];
 		if ( isalpha(c) )
 			c = tolower( c );
 		
-		// is GBK char
 		if ( !is_punctuation(c) && !isalpha(c) && 
-			 ((c>=0x81&&c<=0xFE) || (c>=0x40&&c<=0x7E) || (c>=0xA1&&c<=0xFE)) )
+			 ((c>=0x81&&c<=0xFE) || (c>=0x40&&c<=0x7E) || (c>=0xA1&&c<=0xFE)) ) {
+			extracted += c; // GBK
+		} else if ( option&EXTRACT_ALPHA && isalpha(c) ) {
+			continue;
+		} else if ( option&EXTRACT_DIGIT && isdigit(c) ) {
+			continue;
+		} else if ( option&EXTRACT_PUNCT && (ispunct(c)||is_punctuation(c)) ) {
+			continue;
+		} else if ( option&EXTRACT_SPACE && (isspace(c)||isblank(c)) ) {
+			continue;
+		} else {
 			extracted += c;
-		// is alpha
-		else if ( option&EXTRACT_ALPHA && isalpha(c) )
-			continue;
-		// is digit
-		else if ( option&EXTRACT_DIGIT && isdigit(c) )
-			continue;
-		// is punct
-		else if ( option&EXTRACT_PUNCT && (ispunct(c)||is_punctuation(c)) )
-			continue;
-		// is space
-		else if ( option&EXTRACT_SPACE && (isspace(c)||isblank(c)) )
-			continue;
-		// other 
-		else
-			extracted += c;
+		}
 		
 		// enough
 		if ( len>0 && extracted.length()>=len )
